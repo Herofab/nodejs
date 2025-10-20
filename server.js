@@ -1,0 +1,89 @@
+const express = require('express');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const flash = require('connect-flash');
+const path = require('path');
+require('dotenv').config();
+
+const { pool, initializeDatabase } = require('./models/database');
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const dashboardRoutes = require('./routes/dashboard');
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Session configuration with PostgreSQL store
+app.use(session({
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session'
+    }),
+    secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+        secure: false, // Set to true in production with HTTPS
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
+app.use(flash());
+
+// Set EJS as templating engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Global middleware for flash messages and user session
+app.use((req, res, next) => {
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    res.locals.user = req.session.user || null;
+    next();
+});
+
+// Routes
+app.use('/auth', authRoutes);
+app.use('/dashboard', dashboardRoutes);
+
+// Root route - redirect to login
+app.get('/', (req, res) => {
+    if (req.session.user) {
+        res.redirect('/dashboard');
+    } else {
+        res.redirect('/auth/login');
+    }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).render('error', { 
+        title: 'Error',
+        message: 'Something went wrong!' 
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).render('error', { 
+        title: '404 - Page Not Found',
+        message: 'The page you are looking for does not exist.' 
+    });
+});
+
+app.listen(PORT, async () => {
+    try {
+        await initializeDatabase();
+        console.log(`Server is running on http://localhost:${PORT}`);
+        console.log('Dashboard Authentication System Started');
+    } catch (error) {
+        console.error('Failed to start server:', error);
+        process.exit(1);
+    }
+});

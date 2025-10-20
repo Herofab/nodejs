@@ -1,0 +1,35 @@
+<% if (success && success.length > 0) { %>
+    <div class="container mt-3">
+        <% success.forEach(function(message) { %>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle"></i> <%= message %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% }); %>
+    </div>
+<% } %>
+
+<% if (error && error.length > 0) { %>
+    <div class="container mt-3">
+        <% error.forEach(function(message) { %>
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle"></i> <%= message %>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <% }); %>
+    </div>
+<% } %>
+
+<% if (locals.errors && errors.length > 0) { %>
+    <div class="container mt-3">
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle"></i> Please correct the following errors:
+            <ul class="mb-0 mt-2">
+                <% errors.forEach(function(error) { %>
+                    <li><%= error.msg %></li>
+                <% }); %>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+<% } %>
