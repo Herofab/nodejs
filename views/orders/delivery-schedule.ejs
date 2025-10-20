@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+    <style>
+        .delivery-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #007bff;
+        }
+        .delivery-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .delivery-today {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+        }
+        .delivery-tomorrow {
+            border-left-color: #fd7e14;
+            background: linear-gradient(135deg, #fff8f0 0%, #ffffff 100%);
+        }
+        .delivery-upcoming {
+            border-left-color: #198754;
+            background: linear-gradient(135deg, #f0fff4 0%, #ffffff 100%);
+        }
+        .delivery-overdue {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #fff5f5 0%, #ffffff 100%);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
+        .calendar-day {
+            border: 1px solid #dee2e6;
+            min-height: 100px;
+            position: relative;
+        }
+        .calendar-day.today {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .delivery-badge {
+            font-size: 0.75rem;
+            margin: 1px;
+        }
+        .route-map {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/orders">Orders</a></li>
+                        <li class="breadcrumb-item active">Delivery Schedule</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h1><i class="fas fa-calendar-check text-primary"></i> Delivery Schedule</h1>
+                    <div class="btn-group">
+                        <a href="/orders/add" class="btn btn-success">
+                            <i class="fas fa-plus-circle"></i> New Order
+                        </a>
+                        <button class="btn btn-info" onclick="optimizeRoutes()">
+                            <i class="fas fa-route"></i> Optimize Routes
+                        </button>
+                        <a href="/orders/schedule/export" class="btn btn-outline-secondary">
+                            <i class="fas fa-download"></i> Export Schedule
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= todayDeliveries ? todayDeliveries.length : 0 %></h3>
+                                <p class="mb-0">Today's Deliveries</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-truck fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= tomorrowDeliveries ? tomorrowDeliveries.length : 0 %></h3>
+                                <p class="mb-0">Tomorrow's Deliveries</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-day fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= weekDeliveries ? weekDeliveries.length : 0 %></h3>
+                                <p class="mb-0">This Week</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-week fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3><%= overdueDeliveries ? overdueDeliveries.length : 0 %></h3>
+                                <p class="mb-0">Overdue</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group" role="group">
+                                <input type="radio" class="btn-check" name="viewType" id="listView" value="list" checked>
+                                <label class="btn btn-outline-primary" for="listView">
+                                    <i class="fas fa-list"></i> List View
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="viewType" id="calendarView" value="calendar">
+                                <label class="btn btn-outline-primary" for="calendarView">
+                                    <i class="fas fa-calendar"></i> Calendar View
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="viewType" id="routeView" value="route">
+                                <label class="btn btn-outline-primary" for="routeView">
+                                    <i class="fas fa-route"></i> Route View
+                                </label>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                <label for="dateFilter" class="form-label me-2 mb-0">Filter by Date:</label>
+                                <input type="date" class="form-control me-2" id="dateFilter" onchange="filterByDate()">
+                                <button class="btn btn-outline-secondary" onclick="clearDateFilter()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listViewContent" class="view-content">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list"></i> Upcoming Deliveries</h5>
+                        </div>
+                        <div class="card-body">
+                            <% if (allDeliveries && allDeliveries.length > 0) { %>
+                                <div class="row">
+                                    <% allDeliveries.forEach(function(delivery) { 
+                                        const deliveryDate = new Date(delivery.next_delivery_date);
+                                        const today = new Date();
+                                        const tomorrow = new Date(today);
+                                        tomorrow.setDate(tomorrow.getDate() + 1);
+                                        
+                                        let cardClass = 'delivery-upcoming';
+                                        let urgencyIcon = 'fa-calendar';
+                                        let urgencyText = 'Upcoming';
+                                        
+                                        if (deliveryDate.toDateString() === today.toDateString()) {
+                                            cardClass = 'delivery-today';
+                                            urgencyIcon = 'fa-exclamation-circle';
+                                            urgencyText = 'Today';
+                                        } else if (deliveryDate.toDateString() === tomorrow.toDateString()) {
+                                            cardClass = 'delivery-tomorrow';
+                                            urgencyIcon = 'fa-clock';
+                                            urgencyText = 'Tomorrow';
+                                        } else if (deliveryDate < today) {
+                                            cardClass = 'delivery-overdue';
+                                            urgencyIcon = 'fa-exclamation-triangle';
+                                            urgencyText = 'Overdue';
+                                        }
+                                    %>
+                                    <div class="col-md-6 col-lg-4 mb-3">
+                                        <div class="card delivery-card <%= cardClass %>">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h6 class="card-title mb-0">
+                                                        <i class="fas fa-user text-primary"></i>
+                                                        <%= delivery.customer_name %>
+                                                    </h6>
+                                                    <span class="badge bg-<%= urgencyText === 'Today' ? 'danger' : urgencyText === 'Tomorrow' ? 'warning' : urgencyText === 'Overdue' ? 'danger' : 'info' %>">
+                                                        <i class="fas <%= urgencyIcon %>"></i> <%= urgencyText %>
+                                                    </span>
+                                                </div>
+                                                
+                                                <p class="text-muted small mb-2">
+                                                    <i class="fas fa-hashtag"></i> <%= delivery.order_number %>
+                                                    <span class="ms-2">
+                                                        <i class="fas fa-phone"></i> <%= delivery.customer_phone %>
+                                                    </span>
+                                                </p>
+                                                
+                                                <div class="mb-2">
+                                                    <strong><i class="fas fa-calendar-day"></i> <%= deliveryDate.toLocaleDateString() %></strong>
+                                                    <br>
+                                                    <span class="text-muted">
+                                                        <i class="fas fa-bottles"></i> <%= delivery.bottle_type %> × <%= delivery.quantity_per_delivery %>
+                                                    </span>
+                                                </div>
+                                                
+                                                <div class="mb-3">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-map-marker-alt"></i>
+                                                        <%= delivery.delivery_address || delivery.customer_address %>
+                                                    </small>
+                                                </div>
+                                                
+                                                <div class="d-flex justify-content-between">
+                                                    <div class="btn-group btn-group-sm">
+                                                        <a href="/orders/<%= delivery.id %>" class="btn btn-outline-info">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                        <button class="btn btn-outline-success" onclick="recordDelivery('<%= delivery.id %>')">
+                                                            <i class="fas fa-truck"></i> Deliver
+                                                        </button>
+                                                    </div>
+                                                    <span class="badge bg-<%= delivery.order_type === 'subscription' ? 'info' : 'warning' %>">
+                                                        <%= delivery.order_type %>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                            <% } else { %>
+                                <div class="text-center py-5">
+                                    <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">No deliveries scheduled</h5>
+                                    <p class="text-muted">All caught up! No pending deliveries at the moment.</p>
+                                    <a href="/orders/add" class="btn btn-primary">
+                                        <i class="fas fa-plus-circle"></i> Schedule New Order
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarViewContent" class="view-content" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-calendar"></i> Calendar View</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary" onclick="previousMonth()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="currentMonth()" id="currentMonthBtn">
+                                    <%= new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) %>
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="nextMonth()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div id="calendar" class="table-responsive">
+                                <!-- Calendar will be generated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Route View -->
+        <div id="routeViewContent" class="view-content" style="display: none;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-route"></i> Delivery Routes</h6>
+                        </div>
+                        <div class="card-body route-map">
+                            <% if (todayDeliveries && todayDeliveries.length > 0) { %>
+                                <h6 class="text-primary">Today's Route</h6>
+                                <div class="list-group list-group-flush mb-3">
+                                    <% todayDeliveries.forEach(function(delivery, index) { %>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-primary rounded-pill me-2"><%= index + 1 %></span>
+                                            <strong><%= delivery.customer_name %></strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= delivery.delivery_address || delivery.customer_address %>
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block"><%= delivery.bottle_type %></small>
+                                            <small class="text-muted">×<%= delivery.quantity_per_delivery %></small>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                            
+                            <% if (tomorrowDeliveries && tomorrowDeliveries.length > 0) { %>
+                                <h6 class="text-warning">Tomorrow's Route</h6>
+                                <div class="list-group list-group-flush">
+                                    <% tomorrowDeliveries.forEach(function(delivery, index) { %>
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="badge bg-warning rounded-pill me-2"><%= index + 1 %></span>
+                                            <strong><%= delivery.customer_name %></strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= delivery.delivery_address || delivery.customer_address %>
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <small class="text-muted d-block"><%= delivery.bottle_type %></small>
+                                            <small class="text-muted">×<%= delivery.quantity_per_delivery %></small>
+                                        </div>
+                                    </div>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-map"></i> Route Optimization</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="mapContainer" class="bg-light text-center" style="height: 400px;">
+                                <div class="d-flex align-items-center justify-content-center h-100">
+                                    <div>
+                                        <i class="fas fa-map fa-3x text-muted mb-3"></i>
+                                        <h6 class="text-muted">Route Map</h6>
+                                        <p class="text-muted">Interactive map integration would go here</p>
+                                        <button class="btn btn-primary" onclick="generateOptimalRoute()">
+                                            <i class="fas fa-route"></i> Generate Optimal Route
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Delivery Modal -->
+    <div class="modal fade" id="deliveryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-truck"></i> Record Delivery</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="deliveryForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="delivery_order_id" name="order_id">
+                        
+                        <div class="mb-3">
+                            <label for="delivered_date" class="form-label">Delivery Date</label>
+                            <input type="date" class="form-control" id="delivered_date" name="delivered_date" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantity_delivered" class="form-label">Quantity Delivered</label>
+                            <input type="number" class="form-control" id="quantity_delivered" name="quantity_delivered" min="1" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="delivery_status" class="form-label">Delivery Status</label>
+                            <select class="form-select" id="delivery_status" name="delivery_status">
+                                <option value="delivered">Delivered</option>
+                                <option value="attempted">Attempted</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="delivery_notes" class="form-label">Delivery Notes</label>
+                            <textarea class="form-control" id="delivery_notes" name="delivery_notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Record Delivery</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        let currentDate = new Date();
+        
+        // Set today's date as default for delivery
+        document.getElementById('delivered_date').value = new Date().toISOString().split('T')[0];
+
+        // View switching
+        document.querySelectorAll('input[name="viewType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                switchView(this.value);
+            });
+        });
+
+        function switchView(viewType) {
+            // Hide all views
+            document.querySelectorAll('.view-content').forEach(view => {
+                view.style.display = 'none';
+            });
+            
+            // Show selected view
+            document.getElementById(viewType + 'ViewContent').style.display = 'block';
+            
+            if (viewType === 'calendar') {
+                generateCalendar();
+            }
+        }
+
+        // Record delivery function
+        function recordDelivery(orderId) {
+            document.getElementById('delivery_order_id').value = orderId;
+            new bootstrap.Modal(document.getElementById('deliveryModal')).show();
+        }
+
+        // Handle delivery form submission
+        document.getElementById('deliveryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/orders/delivery/record', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('deliveryModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error recording delivery: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error recording delivery');
+            });
+        });
+
+        // Calendar functions
+        function generateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Update button text
+            document.getElementById('currentMonthBtn').textContent = 
+                currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDayOfWeek = firstDay.getDay();
+            
+            let calendarHTML = `
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            let dayCount = 1;
+            for (let week = 0; week < 6; week++) {
+                calendarHTML += '<tr>';
+                for (let day = 0; day < 7; day++) {
+                    if ((week === 0 && day < startingDayOfWeek) || dayCount > daysInMonth) {
+                        calendarHTML += '<td class="calendar-day"></td>';
+                    } else {
+                        const isToday = new Date().toDateString() === new Date(year, month, dayCount).toDateString();
+                        calendarHTML += `
+                            <td class="calendar-day ${isToday ? 'today' : ''}" data-date="${year}-${String(month + 1).padStart(2, '0')}-${String(dayCount).padStart(2, '0')}">
+                                <div class="fw-bold mb-1">${dayCount}</div>
+                                <div id="deliveries-${dayCount}"></div>
+                            </td>
+                        `;
+                        dayCount++;
+                    }
+                }
+                calendarHTML += '</tr>';
+                if (dayCount > daysInMonth) break;
+            }
+            
+            calendarHTML += '</tbody></table>';
+            calendar.innerHTML = calendarHTML;
+            
+            // Add delivery badges to calendar days
+            addDeliveriesToCalendar();
+        }
+
+        function addDeliveriesToCalendar() {
+            // This would populate calendar with delivery data
+            // For now, just a placeholder
+        }
+
+        function previousMonth() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            generateCalendar();
+        }
+
+        function nextMonth() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            generateCalendar();
+        }
+
+        function currentMonth() {
+            currentDate = new Date();
+            generateCalendar();
+        }
+
+        // Route optimization functions
+        function optimizeRoutes() {
+            alert('Route optimization feature - would integrate with mapping service');
+        }
+
+        function generateOptimalRoute() {
+            alert('Generating optimal route - would show turn-by-turn directions');
+        }
+
+        // Date filtering
+        function filterByDate() {
+            const selectedDate = document.getElementById('dateFilter').value;
+            if (selectedDate) {
+                // Filter deliveries by selected date
+                console.log('Filtering by date:', selectedDate);
+                // Implementation would filter the delivery cards
+            }
+        }
+
+        function clearDateFilter() {
+            document.getElementById('dateFilter').value = '';
+            filterByDate();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateCalendar();
+        });
+    </script>
+</body>
+</html>

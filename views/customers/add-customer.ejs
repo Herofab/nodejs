@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/customers">Customers</a></li>
+                        <li class="breadcrumb-item active">Add New Customer</li>
+                    </ol>
+                </nav>
+                <h1><i class="fas fa-user-plus text-success"></i> Add New Customer</h1>
+            </div>
+        </div>
+
+        <!-- Add Customer Form -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user-edit"></i> Customer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/customers/add" id="addCustomerForm">
+                            <!-- Personal Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Personal Information</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="full_name" name="full_name" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cnic" class="form-label">CNIC <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="cnic" name="cnic" 
+                                           pattern="[0-9]{5}-[0-9]{7}-[0-9]{1}" 
+                                           placeholder="12345-1234567-1" required>
+                                    <small class="text-muted">Format: 12345-1234567-1</small>
+                                    <div id="cnic-feedback" class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone_primary" class="form-label">Primary Phone <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="phone_primary" name="phone_primary" 
+                                           placeholder="03001234567" required>
+                                    <div id="phone-feedback" class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="phone_secondary" class="form-label">Secondary Phone</label>
+                                    <input type="text" class="form-control" id="phone_secondary" name="phone_secondary" 
+                                           placeholder="03001234567">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="customer@example.com">
+                                    <div id="email-feedback" class="invalid-feedback"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="customer_type" class="form-label">Customer Type</label>
+                                    <select class="form-select" id="customer_type" name="customer_type">
+                                        <option value="residential" selected>Residential</option>
+                                        <option value="commercial">Commercial</option>
+                                        <option value="industrial">Industrial</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Address Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Address Information</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="address_line1" class="form-label">Address Line 1 <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="address_line1" name="address_line1" 
+                                              rows="2" placeholder="House/Building, Street" required></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="address_line2" class="form-label">Address Line 2</label>
+                                    <textarea class="form-control" id="address_line2" name="address_line2" 
+                                              rows="2" placeholder="Additional address details"></textarea>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="city" name="city" 
+                                           placeholder="Karachi" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="area" class="form-label">Area/Locality</label>
+                                    <input type="text" class="form-control" id="area" name="area" 
+                                           placeholder="Clifton, DHA, etc.">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="postal_code" class="form-label">Postal Code</label>
+                                    <input type="text" class="form-control" id="postal_code" name="postal_code" 
+                                           placeholder="75600">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="landmark" class="form-label">Landmark</label>
+                                    <input type="text" class="form-control" id="landmark" name="landmark" 
+                                           placeholder="Near mosque, hospital, etc.">
+                                </div>
+                            </div>
+
+                            <!-- Financial Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Financial Information</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="credit_limit" class="form-label">Credit Limit (Rs.)</label>
+                                    <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
+                                           min="0" step="0.01" placeholder="0.00">
+                                    <small class="text-muted">Maximum outstanding amount allowed</small>
+                                </div>
+                            </div>
+
+                            <!-- Additional Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Additional Information</h6>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="notes" class="form-label">Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                              placeholder="Any additional notes about the customer"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="/customers" class="btn btn-secondary">
+                                            <i class="fas fa-arrow-left"></i> Back to Customers
+                                        </a>
+                                        <div>
+                                            <button type="reset" class="btn btn-outline-warning me-2">
+                                                <i class="fas fa-undo"></i> Reset Form
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Save Customer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview/Help Card -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-info-circle"></i> Customer Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Required Fields:</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-check text-success"></i> Full Name</li>
+                                <li><i class="fas fa-check text-success"></i> CNIC (Format: 12345-1234567-1)</li>
+                                <li><i class="fas fa-check text-success"></i> Primary Phone</li>
+                                <li><i class="fas fa-check text-success"></i> Address Line 1</li>
+                                <li><i class="fas fa-check text-success"></i> City</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Customer Types:</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-home text-success"></i> <strong>Residential:</strong> Home customers</li>
+                                <li><i class="fas fa-building text-warning"></i> <strong>Commercial:</strong> Offices, shops</li>
+                                <li><i class="fas fa-industry text-info"></i> <strong>Industrial:</strong> Factories, warehouses</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-lightbulb"></i> 
+                                <strong>Tip:</strong> Customer code will be automatically generated when you save the customer.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/customers" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list"></i> View All Customers
+                            </a>
+                            <a href="/customers/overdue" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-exclamation-triangle"></i> Overdue Customers
+                            </a>
+                            <a href="/orders/add" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-plus-circle"></i> Create Order
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Format CNIC input
+            const cnicInput = document.getElementById('cnic');
+            if (cnicInput) {
+                cnicInput.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length >= 5) {
+                        value = value.substring(0, 5) + '-' + value.substring(5);
+                    }
+                    if (value.length >= 13) {
+                        value = value.substring(0, 13) + '-' + value.substring(13, 14);
+                    }
+                    e.target.value = value;
+                });
+            }
+
+            // Format phone inputs
+            const phoneInputs = document.querySelectorAll('#phone_primary, #phone_secondary');
+            phoneInputs.forEach(input => {
+                input.addEventListener('input', function(e) {
+                    let value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 11) {
+                        value = value.substring(0, 11);
+                    }
+                    e.target.value = value;
+                });
+            });
+
+            // Form validation
+            const form = document.getElementById('addCustomerForm');
+            if (form) {
+                // Real-time duplicate checking
+                let duplicateTimeout;
+                const checkDuplicates = async () => {
+                    const cnic = document.getElementById('cnic').value;
+                    const phone = document.getElementById('phone_primary').value;
+                    const email = document.getElementById('email').value;
+
+                    if (!cnic && !phone && !email) return;
+
+                    try {
+                        const response = await fetch('/customers/api/check-duplicate', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                cnic: cnic || null,
+                                phone_primary: phone || null,
+                                email: email || null
+                            })
+                        });
+
+                        const duplicates = await response.json();
+
+                        // Update CNIC feedback
+                        const cnicInput = document.getElementById('cnic');
+                        const cnicFeedback = document.getElementById('cnic-feedback');
+                        if (duplicates.cnic) {
+                            cnicInput.classList.add('is-invalid');
+                            cnicFeedback.textContent = 'A customer with this CNIC already exists';
+                            cnicFeedback.style.display = 'block';
+                        } else {
+                            cnicInput.classList.remove('is-invalid');
+                            cnicFeedback.style.display = 'none';
+                        }
+
+                        // Update phone feedback
+                        const phoneInput = document.getElementById('phone_primary');
+                        const phoneFeedback = document.getElementById('phone-feedback');
+                        if (duplicates.phone_primary) {
+                            phoneInput.classList.add('is-invalid');
+                            phoneFeedback.textContent = 'A customer with this phone number already exists';
+                            phoneFeedback.style.display = 'block';
+                        } else {
+                            phoneInput.classList.remove('is-invalid');
+                            phoneFeedback.style.display = 'none';
+                        }
+
+                        // Update email feedback
+                        const emailInput = document.getElementById('email');
+                        const emailFeedback = document.getElementById('email-feedback');
+                        if (duplicates.email) {
+                            emailInput.classList.add('is-invalid');
+                            emailFeedback.textContent = 'A customer with this email already exists';
+                            emailFeedback.style.display = 'block';
+                        } else {
+                            emailInput.classList.remove('is-invalid');
+                            emailFeedback.style.display = 'none';
+                        }
+
+                    } catch (error) {
+                        console.error('Error checking duplicates:', error);
+                    }
+                };
+
+                // Add event listeners for real-time checking
+                ['cnic', 'phone_primary', 'email'].forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        field.addEventListener('input', () => {
+                            clearTimeout(duplicateTimeout);
+                            duplicateTimeout = setTimeout(checkDuplicates, 500); // Debounce 500ms
+                        });
+                    }
+                });
+
+                form.addEventListener('submit', function(e) {
+                    const cnic = document.getElementById('cnic').value;
+                    const cnicPattern = /^[0-9]{5}-[0-9]{7}-[0-9]{1}$/;
+                    
+                    // Check for validation errors
+                    const hasInvalidFields = form.querySelector('.is-invalid');
+                    if (hasInvalidFields) {
+                        e.preventDefault();
+                        alert('Please fix the validation errors before submitting');
+                        return false;
+                    }
+                    
+                    if (!cnicPattern.test(cnic)) {
+                        e.preventDefault();
+                        alert('Please enter a valid CNIC in format: 12345-1234567-1');
+                        document.getElementById('cnic').focus();
+                        return false;
+                    }
+
+                    const primaryPhone = document.getElementById('phone_primary').value;
+                    if (primaryPhone.length < 10) {
+                        e.preventDefault();
+                        alert('Please enter a valid phone number (at least 10 digits)');
+                        document.getElementById('phone_primary').focus();
+                        return false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

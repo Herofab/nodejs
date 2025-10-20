@@ -13,6 +13,8 @@ const PORT = process.env.PORT || 3000;
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
 const bottleRoutes = require('./routes/bottles');
+const customerRoutes = require('./routes/customers');
+const orderRoutes = require('./routes/orders');
 
 // Middleware
 app.use(express.json());
@@ -52,6 +54,8 @@ app.use((req, res, next) => {
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/bottles', bottleRoutes);
+app.use('/customers', customerRoutes);
+app.use('/orders', orderRoutes);
 
 // Root route - redirect to login
 app.get('/', (req, res) => {

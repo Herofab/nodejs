@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/orders">Orders</a></li>
+                        <li class="breadcrumb-item active">Order #<%= order.order_number %></li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-file-invoice text-primary"></i> Order Details</h1>
+                        <p class="text-muted mb-0">Order #<%= order.order_number %> - <%= order.customer_name %></p>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/orders/<%= order.id %>/edit">
+                                <i class="fas fa-edit"></i> Edit Order
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="printOrder()">
+                                <i class="fas fa-print"></i> Print Order
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-warning" href="#" onclick="pauseOrder(currentOrderId)">
+                                <i class="fas fa-pause"></i> Pause Order
+                            </a></li>
+                            <% if (order.order_status !== 'cancelled') { %>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="cancelOrder(currentOrderId)">
+                                <i class="fas fa-times"></i> Cancel Order
+                            </a></li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Order Information -->
+            <div class="col-md-8">
+                <!-- Order Status and Basic Info -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-info-circle"></i> Order Information</h5>
+                        <span class="badge bg-<%= order.order_status === 'confirmed' || order.order_status === 'in-progress' ? 'success' : order.order_status === 'paused' ? 'warning' : order.order_status === 'completed' ? 'primary' : 'danger' %> fs-6">
+                            <%= (order.order_status || 'pending').toUpperCase() %>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Order Number:</th>
+                                        <td><%= order.order_number %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Order Type:</th>
+                                        <td>
+                                            <span class="badge bg-<%= order.order_type === 'subscription' ? 'info' : 'warning' %>">
+                                                <%= order.order_type.toUpperCase() %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <% if (order.subscription_type) { %>
+                                    <tr>
+                                        <th>Subscription:</th>
+                                        <td><%= order.subscription_type.replace('-', ' ').toUpperCase() %></td>
+                                    </tr>
+                                    <% } %>
+                                    <tr>
+                                        <th>Bottle Type:</th>
+                                        <td><%= order.bottle_type %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Quantity per Delivery:</th>
+                                        <td><%= order.quantity_per_delivery %> bottles</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Start Date:</th>
+                                        <td><%= new Date(order.start_date).toLocaleDateString() %></td>
+                                    </tr>
+                                    <% if (order.end_date) { %>
+                                    <tr>
+                                        <th>End Date:</th>
+                                        <td><%= new Date(order.end_date).toLocaleDateString() %></td>
+                                    </tr>
+                                    <% } %>
+                                    <tr>
+                                        <th>Unit Price:</th>
+                                        <td>Rs. <%= order.unit_price.toLocaleString() %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Priority:</th>
+                                        <td>
+                                            <span class="badge bg-<%= order.priority_level === 'urgent' ? 'danger' : order.priority_level === 'high' ? 'warning' : 'secondary' %>">
+                                                <%= order.priority_level.toUpperCase() %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Created:</th>
+                                        <td><%= new Date(order.created_at).toLocaleDateString() %></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress Bar -->
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span><strong>Delivery Progress:</strong></span>
+                                <span><%= order.bottles_delivered %>/<%= order.total_bottles_ordered || 'Ongoing' %> bottles delivered</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: <%= order.total_bottles_ordered ? (order.bottles_delivered / order.total_bottles_ordered * 100) : 0 %>%">
+                                    <%= order.total_bottles_ordered ? Math.round(order.bottles_delivered / order.total_bottles_ordered * 100) : 0 %>%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-user"></i> Customer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><%= order.customer_name %></h6>
+                                <p class="text-muted mb-1">Customer Code: <%= order.customer_code %></p>
+                                <p class="text-muted mb-1">Phone: <%= order.customer_phone %></p>
+                                <p class="text-muted mb-1">Customer ID: <%= order.customer_id %></p>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Delivery Address:</h6>
+                                <p class="mb-1"><%= order.delivery_address || order.address_line1 %></p>
+                                <p class="text-muted mb-1"><%= order.city %></p>
+                                <a href="/customers/<%= order.customer_id %>" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt"></i> View Customer
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <% if (order.delivery_instructions) { %>
+                        <div class="mt-3">
+                            <h6>Delivery Instructions:</h6>
+                            <p class="text-muted"><%= order.delivery_instructions %></p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Custom Delivery Dates (if applicable) -->
+                <% if (order.subscription_type === 'custom-dates' && order.custom_delivery_dates) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-calendar-alt"></i> Custom Delivery Schedule</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Selected Days of Month:</strong></p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <% JSON.parse(order.custom_delivery_dates).forEach(day => { %>
+                                <span class="badge bg-info fs-6"><%= day %><sup><%= day === 1 || day === 21 || day === 31 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th' %></sup></span>
+                            <% }); %>
+                        </div>
+                        <% if (order.next_delivery_date) { %>
+                        <p class="mt-3 mb-0"><strong>Next Delivery:</strong> <%= new Date(order.next_delivery_date).toLocaleDateString() %></p>
+                        <% } %>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Order Notes -->
+                <% if (order.notes) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sticky-note"></i> Order Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0"><%= order.notes %></p>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <!-- Order Summary -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-calculator"></i> Order Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <th>Total Orders:</th>
+                                <td><%= order.total_deliveries || 'Ongoing' %></td>
+                            </tr>
+                            <tr>
+                                <th>Completed:</th>
+                                <td><%= order.completed_deliveries || 0 %></td>
+                            </tr>
+                            <tr>
+                                <th>Pending:</th>
+                                <td><%= (order.total_deliveries || 0) - (order.completed_deliveries || 0) %></td>
+                            </tr>
+                            <tr>
+                                <th>Bottles Delivered:</th>
+                                <td><%= order.bottles_delivered %></td>
+                            </tr>
+                            <tr>
+                                <th>Total Amount:</th>
+                                <td><strong>Rs. <%= (order.bottles_delivered * order.unit_price).toLocaleString() %></strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-success btn-sm" onclick="recordDelivery(<%= order.id %>)">
+                                <i class="fas fa-truck"></i> Record Delivery
+                            </button>
+                            <button type="button" class="btn btn-info btn-sm" onclick="scheduleDelivery(<%= order.id %>)">
+                                <i class="fas fa-calendar-plus"></i> Schedule Delivery
+                            </button>
+                            <a href="/orders/<%= order.id %>/edit" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Edit Order
+                            </a>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="duplicateOrder(<%= order.id %>)">
+                                <i class="fas fa-copy"></i> Duplicate Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Orders -->
+                <% if (typeof relatedOrders !== 'undefined' && relatedOrders && relatedOrders.length > 0) { %>
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-list"></i> Other Customer Orders</h6>
+                    </div>
+                    <div class="card-body">
+                        <% relatedOrders.forEach(relatedOrder => { %>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <a href="/orders/<%= relatedOrder.id %>" class="text-decoration-none">
+                                    #<%= relatedOrder.order_number %>
+                                </a>
+                                <small class="text-muted d-block"><%= relatedOrder.bottle_type %></small>
+                            </div>
+                            <span class="badge bg-<%= relatedOrder.order_status === 'confirmed' || relatedOrder.order_status === 'in-progress' ? 'success' : relatedOrder.order_status === 'paused' ? 'warning' : relatedOrder.order_status === 'completed' ? 'primary' : 'danger' %>">
+                                <%= relatedOrder.order_status || 'pending' %>
+                            </span>
+                        </div>
+                        <% }); %>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Delivery History -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-history"></i> Delivery History</h5>
+                        <button type="button" class="btn btn-success btn-sm" onclick="recordDelivery(<%= order.id %>)">
+                            <i class="fas fa-plus"></i> Record New Delivery
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <% if (deliveries && deliveries.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Delivery Date</th>
+                                        <th>Bottles Delivered</th>
+                                        <th>Delivery Address</th>
+                                        <th>Status</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% deliveries.forEach(delivery => { %>
+                                    <tr>
+                                        <td><%= new Date(delivery.delivery_date).toLocaleDateString() %></td>
+                                        <td><%= delivery.bottles_delivered %></td>
+                                        <td><%= delivery.delivery_address || 'Default' %></td>
+                                        <td>
+                                            <span class="badge bg-<%= delivery.delivery_status === 'delivered' ? 'success' : delivery.delivery_status === 'failed' ? 'danger' : 'warning' %>">
+                                                <%= delivery.delivery_status %>
+                                            </span>
+                                        </td>
+                                        <td><%= delivery.notes || '-' %></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="editDelivery(<%= delivery.id %>)">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                        <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No deliveries recorded yet</h6>
+                            <p class="text-muted">Click "Record New Delivery" to add the first delivery for this order.</p>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Record Delivery Modal -->
+    <div class="modal fade" id="recordDeliveryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-truck"></i> Record Delivery</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="recordDeliveryForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="delivery_order_id" name="order_id" value="<%= order.id %>">
+                        
+                        <div class="mb-3">
+                            <label for="delivery_date" class="form-label">Delivery Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="delivery_date" name="delivery_date" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="bottles_delivered_count" class="form-label">Bottles Delivered <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="bottles_delivered_count" name="bottles_delivered" 
+                                   min="1" value="<%= order.quantity_per_delivery %>" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="delivery_status" class="form-label">Delivery Status</label>
+                            <select class="form-select" id="delivery_status" name="delivery_status">
+                                <option value="delivered">Delivered</option>
+                                <option value="attempted">Attempted</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="delivery_notes" class="form-label">Delivery Notes</label>
+                            <textarea class="form-control" id="delivery_notes" name="notes" rows="3" 
+                                      placeholder="Any notes about this delivery..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Record Delivery</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        // Store order ID for use in functions
+        const currentOrderId = <%= order.id %>;
+        
+        // Set default delivery date to today
+        document.getElementById('delivery_date').value = new Date().toISOString().split('T')[0];
+
+        function recordDelivery(orderId) {
+            document.getElementById('delivery_order_id').value = orderId;
+            new bootstrap.Modal(document.getElementById('recordDeliveryModal')).show();
+        }
+
+        function scheduleDelivery(orderId) {
+            window.location.href = `/orders/${orderId}/schedule`;
+        }
+
+        function duplicateOrder(orderId) {
+            if (confirm('Create a new order based on this order?')) {
+                window.location.href = `/orders/add?duplicate=${orderId}`;
+            }
+        }
+
+        function pauseOrder(orderId) {
+            if (confirm('Are you sure you want to pause this order?')) {
+                fetch(`/orders/${orderId}/pause`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error pausing order: ' + data.message);
+                        }
+                    });
+            }
+        }
+
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+                fetch(`/orders/${orderId}/cancel`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error cancelling order: ' + data.message);
+                        }
+                    });
+            }
+        }
+
+        function printOrder() {
+            window.print();
+        }
+
+        // Handle delivery recording form
+        document.getElementById('recordDeliveryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/orders/delivery/record', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('recordDeliveryModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error recording delivery: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error recording delivery');
+            });
+        });
+    </script>
+</body>
+</html>

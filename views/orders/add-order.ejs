@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/orders">Orders</a></li>
+                        <li class="breadcrumb-item active">Create New Order</li>
+                    </ol>
+                </nav>
+                <h1><i class="fas fa-plus-circle text-success"></i> Create New Order</h1>
+            </div>
+        </div>
+
+        <!-- Create Order Form -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-shopping-cart"></i> Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="/orders/add" id="addOrderForm">
+                            <!-- Customer Selection -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Customer Information</h6>
+                                </div>
+                                <div class="col-md-8 mb-3">
+                                    <label for="customer_search" class="form-label">Select Customer <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="customer_search" 
+                                               placeholder="Search by name, code, or phone..." 
+                                               value="">
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearCustomer()">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="customer_id" name="customer_id" 
+                                           value="" required>
+                                    <div id="customer-results" class="list-group mt-2" style="display: none;"></div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <a href="/customers/add" class="btn btn-outline-primary">
+                                            <i class="fas fa-user-plus"></i> Add New Customer
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <!-- Selected Customer Display -->
+                                <div class="col-12" id="selected-customer" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <strong>Customer:</strong> <span id="customer-name"></span><br>
+                                                <strong>Code:</strong> <span id="customer-code"></span><br>
+                                                <strong>Phone:</strong> <span id="customer-phone"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <strong>Type:</strong> <span id="customer-type"></span><br>
+                                                <strong>City:</strong> <span id="customer-city"></span><br>
+                                                <strong>Balance:</strong> Rs. <span id="customer-balance">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Order Details -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Order Details</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="order_type" class="form-label">Order Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="order_type" name="order_type" required>
+                                        <option value="">Select Order Type</option>
+                                        <option value="subscription">Subscription</option>
+                                        <option value="on-demand">On-Demand</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3" id="subscription-type-container" style="display: none;">
+                                    <label for="subscription_type" class="form-label">Subscription Type</label>
+                                    <select class="form-select" id="subscription_type" name="subscription_type">
+                                        <option value="">Select Subscription</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="parallel-1day">Every Day</option>
+                                        <option value="parallel-2day">Every 2 Days</option>
+                                        <option value="parallel-3day">Every 3 Days</option>
+                                        <option value="custom-dates">Custom Dates</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Custom Dates Selection -->
+                                <div class="col-12 mb-3" id="custom-dates-container" style="display: none;">
+                                    <label class="form-label">Select Delivery Days of Month</label>
+                                    <div id="day-selector" class="mb-3"></div>
+                                    <input type="hidden" id="custom_delivery_dates" name="custom_delivery_dates">
+                                    <div id="selected-dates-display" class="text-muted"></div>
+                                    <div id="delivery-preview"></div>
+                                </div>
+
+                                <div class="col-md-4 mb-3">
+                                    <label for="bottle_type" class="form-label">Bottle Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="bottle_type" name="bottle_type" required>
+                                        <option value="">Select Bottle</option>
+                                        <option value="0.5L">0.5 Liter</option>
+                                        <option value="1L">1 Liter</option>
+                                        <option value="5L">5 Liter</option>
+                                        <option value="20L">20 Liter</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="quantity_per_delivery" class="form-label">Quantity per Delivery <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="quantity_per_delivery" name="quantity_per_delivery" 
+                                           min="1" placeholder="1" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="unit_price" class="form-label">Unit Price (Rs.) <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="unit_price" name="unit_price" 
+                                           min="0" step="0.01" placeholder="0.00" required>
+                                </div>
+                            </div>
+
+                            <!-- Delivery Schedule -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Delivery Schedule</h6>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="start_date" class="form-label">Start Date <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                </div>
+                                <div class="col-md-6 mb-3" id="end-date-container">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                    <small class="text-muted">Leave empty for ongoing subscription</small>
+                                </div>
+                                <div class="col-md-6 mb-3" id="total-bottles-container" style="display: none;">
+                                    <label for="total_bottles_ordered" class="form-label">Total Bottles (Optional)</label>
+                                    <input type="number" class="form-control" id="total_bottles_ordered" name="total_bottles_ordered" 
+                                           min="1" placeholder="Auto-calculated">
+                                    <small class="text-muted">Leave empty to auto-calculate</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="priority_level" class="form-label">Priority Level</label>
+                                    <select class="form-select" id="priority_level" name="priority_level">
+                                        <option value="normal" selected>Normal</option>
+                                        <option value="high">High</option>
+                                        <option value="urgent">Urgent</option>
+                                        <option value="low">Low</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Delivery Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6 class="border-bottom pb-2 mb-3">Delivery Information</h6>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="delivery_address" class="form-label">Delivery Address</label>
+                                    <textarea class="form-control" id="delivery_address" name="delivery_address" 
+                                              rows="2" placeholder="Leave empty to use customer's address"></textarea>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="delivery_instructions" class="form-label">Delivery Instructions</label>
+                                    <textarea class="form-control" id="delivery_instructions" name="delivery_instructions" 
+                                              rows="3" placeholder="Special delivery instructions, gate codes, etc."></textarea>
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label for="notes" class="form-label">Order Notes</label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                              placeholder="Any additional notes about this order"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Order Summary -->
+                            <div class="row mb-4" id="order-summary" style="display: none;">
+                                <div class="col-12">
+                                    <div class="card bg-light">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-calculator"></i> Order Summary</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <p><strong>Estimated Deliveries:</strong> <span id="summary-deliveries">-</span></p>
+                                                    <p><strong>Total Bottles:</strong> <span id="summary-bottles">-</span></p>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <p><strong>Unit Price:</strong> Rs. <span id="summary-unit-price">0.00</span></p>
+                                                    <p><strong>Total Amount:</strong> Rs. <span id="summary-total">0.00</span></p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="/orders" class="btn btn-secondary">
+                                            <i class="fas fa-arrow-left"></i> Back to Orders
+                                        </a>
+                                        <div>
+                                            <button type="reset" class="btn btn-outline-warning me-2">
+                                                <i class="fas fa-undo"></i> Reset Form
+                                            </button>
+                                            <button type="submit" class="btn btn-success">
+                                                <i class="fas fa-save"></i> Create Order
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Help/Information Sidebar -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-info-circle"></i> Order Guide</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h6>Order Types:</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-sync text-info"></i> <strong>Subscription:</strong> Recurring deliveries</li>
+                                <li><i class="fas fa-shopping-bag text-warning"></i> <strong>On-Demand:</strong> One-time delivery</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <h6>Subscription Types:</h6>
+                            <ul class="list-unstyled small">
+                                <li><i class="fas fa-calendar"></i> <strong>Monthly:</strong> Once per month</li>
+                                <li><i class="fas fa-clock"></i> <strong>Every Day:</strong> Daily delivery</li>
+                                <li><i class="fas fa-clock"></i> <strong>Every 2/3 Days:</strong> Regular intervals</li>
+                                <li><i class="fas fa-calendar-alt"></i> <strong>Custom Dates:</strong> Specific days of month</li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <small>
+                                <i class="fas fa-lightbulb"></i> 
+                                <strong>Tip:</strong> For custom dates, select specific days of the month (e.g., 6th, 9th, 11th) for recurring deliveries.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6><i class="fas fa-history"></i> Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/orders" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list"></i> View All Orders
+                            </a>
+                            <a href="/orders/schedule/delivery" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-calendar-check"></i> Delivery Schedule
+                            </a>
+                            <a href="/customers" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-users"></i> Manage Customers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/custom-dates.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default start date to today
+            document.getElementById('start_date').value = new Date().toISOString().split('T')[0];
+
+            // Customer search functionality
+            setupCustomerSearch();
+            
+            // Order type change handler
+            document.getElementById('order_type').addEventListener('change', function() {
+                const subscriptionContainer = document.getElementById('subscription-type-container');
+                const endDateContainer = document.getElementById('end-date-container');
+                const totalBottlesContainer = document.getElementById('total-bottles-container');
+                
+                if (this.value === 'subscription') {
+                    subscriptionContainer.style.display = 'block';
+                    endDateContainer.style.display = 'block';
+                    totalBottlesContainer.style.display = 'block';
+                } else {
+                    subscriptionContainer.style.display = 'none';
+                    endDateContainer.style.display = 'none';
+                    totalBottlesContainer.style.display = 'none';
+                    document.getElementById('custom-dates-container').style.display = 'none';
+                }
+                updateOrderSummary();
+            });
+
+            // Subscription type change handler
+            document.getElementById('subscription_type').addEventListener('change', function() {
+                const customDatesContainer = document.getElementById('custom-dates-container');
+                if (this.value === 'custom-dates') {
+                    customDatesContainer.style.display = 'block';
+                } else {
+                    customDatesContainer.style.display = 'none';
+                }
+                updateOrderSummary();
+            });
+
+            // Update summary on input changes
+            ['quantity_per_delivery', 'unit_price', 'start_date', 'end_date', 'total_bottles_ordered'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', updateOrderSummary);
+                }
+            });
+        });
+
+        function setupCustomerSearch() {
+            const searchInput = document.getElementById('customer_search');
+            const resultsDiv = document.getElementById('customer-results');
+            const customerIdInput = document.getElementById('customer_id');
+            
+            let searchTimeout;
+            
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+                
+                if (query.length < 2) {
+                    resultsDiv.style.display = 'none';
+                    return;
+                }
+                
+                searchTimeout = setTimeout(() => {
+                    fetch(`/customers/api/search?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(customers => {
+                            displayCustomerResults(customers);
+                        })
+                        .catch(error => {
+                            console.error('Error searching customers:', error);
+                        });
+                }, 300);
+            });
+            
+            // Hide results when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!searchInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                    resultsDiv.style.display = 'none';
+                }
+            });
+        }
+
+        function displayCustomerResults(customers) {
+            const resultsDiv = document.getElementById('customer-results');
+            
+            if (customers.length === 0) {
+                resultsDiv.innerHTML = '<div class="list-group-item">No customers found</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            
+            resultsDiv.innerHTML = customers.map(customer => `
+                <div class="list-group-item list-group-item-action" onclick="selectCustomer(${customer.id}, '${customer.full_name}', '${customer.customer_code}', '${customer.phone_primary}', '${customer.customer_type}', '${customer.city}', ${customer.current_balance || 0})">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${customer.full_name}</strong>
+                            <small class="text-muted d-block">${customer.customer_code} • ${customer.phone_primary}</small>
+                        </div>
+                        <small class="text-muted">${customer.city}</small>
+                    </div>
+                </div>
+            `).join('');
+            
+            resultsDiv.style.display = 'block';
+        }
+
+        function selectCustomer(id, name, code, phone, type, city, balance) {
+            document.getElementById('customer_id').value = id;
+            document.getElementById('customer_search').value = name;
+            document.getElementById('customer-results').style.display = 'none';
+            
+            // Update customer display
+            document.getElementById('customer-name').textContent = name;
+            document.getElementById('customer-code').textContent = code;
+            document.getElementById('customer-phone').textContent = phone;
+            document.getElementById('customer-type').textContent = type;
+            document.getElementById('customer-city').textContent = city;
+            document.getElementById('customer-balance').textContent = balance.toLocaleString();
+            
+            document.getElementById('selected-customer').style.display = 'block';
+        }
+
+        function clearCustomer() {
+            document.getElementById('customer_id').value = '';
+            document.getElementById('customer_search').value = '';
+            document.getElementById('selected-customer').style.display = 'none';
+            document.getElementById('customer-results').style.display = 'none';
+        }
+
+        function updateOrderSummary() {
+            const orderType = document.getElementById('order_type').value;
+            const subscriptionType = document.getElementById('subscription_type').value;
+            const quantityPerDelivery = parseInt(document.getElementById('quantity_per_delivery').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('unit_price').value) || 0;
+            const startDate = document.getElementById('start_date').value;
+            const endDate = document.getElementById('end_date').value;
+            const totalBottles = parseInt(document.getElementById('total_bottles_ordered').value) || 0;
+            
+            const summaryDiv = document.getElementById('order-summary');
+            
+            if (!orderType || !quantityPerDelivery || !unitPrice) {
+                summaryDiv.style.display = 'none';
+                return;
+            }
+            
+            let estimatedDeliveries = 1;
+            let calculatedBottles = quantityPerDelivery;
+            
+            if (orderType === 'subscription' && startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                const diffTime = Math.abs(end - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                
+                switch (subscriptionType) {
+                    case 'monthly':
+                        estimatedDeliveries = Math.ceil(diffDays / 30);
+                        break;
+                    case 'parallel-1day':
+                        estimatedDeliveries = diffDays;
+                        break;
+                    case 'parallel-2day':
+                        estimatedDeliveries = Math.ceil(diffDays / 2);
+                        break;
+                    case 'parallel-3day':
+                        estimatedDeliveries = Math.ceil(diffDays / 3);
+                        break;
+                    case 'custom-dates':
+                        // This would be calculated by the custom dates script
+                        estimatedDeliveries = '?';
+                        break;
+                }
+                
+                if (typeof estimatedDeliveries === 'number') {
+                    calculatedBottles = totalBottles || (quantityPerDelivery * estimatedDeliveries);
+                }
+            }
+            
+            document.getElementById('summary-deliveries').textContent = estimatedDeliveries;
+            document.getElementById('summary-bottles').textContent = calculatedBottles;
+            document.getElementById('summary-unit-price').textContent = unitPrice.toFixed(2);
+            document.getElementById('summary-total').textContent = (calculatedBottles * unitPrice).toLocaleString();
+            
+            summaryDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

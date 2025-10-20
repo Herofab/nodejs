@@ -1,6 +1,8 @@
 // Authentication middleware to protect routes
 const isAuthenticated = (req, res, next) => {
     if (req.session && req.session.user) {
+        // Make user available as req.user for convenience
+        req.user = req.session.user;
         return next();
     } else {
         req.flash('error', 'Please log in to access this page');

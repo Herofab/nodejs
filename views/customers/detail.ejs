@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/customers">Customers</a></li>
+                        <li class="breadcrumb-item active"><%= customer.full_name %></li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-user text-primary"></i> <%= customer.full_name %></h1>
+                        <p class="text-muted mb-0">Customer Code: <%= customer.customer_code %></p>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/customers/<%= customer.id %>/edit">
+                                <i class="fas fa-edit"></i> Edit Customer
+                            </a></li>
+                            <li><a class="dropdown-item" href="/orders/add?customer=<%= customer.id %>">
+                                <i class="fas fa-plus-circle"></i> Create Order
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="printCustomer()">
+                                <i class="fas fa-print"></i> Print Details
+                            </a></li>
+                            <li><a class="dropdown-item text-warning" href="#" onclick="suspendCustomer('<%= customer.id %>')">
+                                <i class="fas fa-pause"></i> Suspend Customer
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Customer Information -->
+            <div class="col-md-8">
+                <!-- Basic Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle"></i> Customer Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Full Name:</th>
+                                        <td><%= customer.full_name %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Customer Code:</th>
+                                        <td><%= customer.customer_code %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>CNIC:</th>
+                                        <td><%= customer.cnic %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Customer Type:</th>
+                                        <td>
+                                            <span class="badge bg-<%= customer.customer_type === 'premium' ? 'warning' : customer.customer_type === 'vip' ? 'danger' : 'info' %>">
+                                                <%= customer.customer_type.toUpperCase() %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td>
+                                            <span class="badge bg-<%= customer.status === 'active' ? 'success' : customer.status === 'suspended' ? 'warning' : 'danger' %>">
+                                                <%= customer.status ? customer.status.toUpperCase() : 'ACTIVE' %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Primary Phone:</th>
+                                        <td>
+                                            <a href="tel:<%= customer.phone_primary %>" class="text-decoration-none">
+                                                <i class="fas fa-phone text-success"></i> <%= customer.phone_primary %>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <% if (customer.phone_secondary) { %>
+                                    <tr>
+                                        <th>Secondary Phone:</th>
+                                        <td>
+                                            <a href="tel:<%= customer.phone_secondary %>" class="text-decoration-none">
+                                                <i class="fas fa-phone text-info"></i> <%= customer.phone_secondary %>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                    <% if (customer.email) { %>
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td>
+                                            <a href="mailto:<%= customer.email %>" class="text-decoration-none">
+                                                <i class="fas fa-envelope text-primary"></i> <%= customer.email %>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    <% } %>
+                                    <tr>
+                                        <th>Credit Limit:</th>
+                                        <td><strong>Rs. <%= parseFloat(customer.credit_limit || 0).toLocaleString() %></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Current Balance:</th>
+                                        <td>
+                                            <span class="<%= (customer.current_balance || 0) < 0 ? 'text-danger' : 'text-success' %>">
+                                                <strong>Rs. <%= parseFloat(customer.current_balance || 0).toLocaleString() %></strong>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-map-marker-alt"></i> Address Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <h6>Primary Address:</h6>
+                                <p class="mb-1">
+                                    <%= customer.address_line1 %>
+                                    <% if (customer.address_line2) { %><br><%= customer.address_line2 %><% } %>
+                                </p>
+                                <p class="text-muted mb-0">
+                                    <%= customer.city %><% if (customer.area) { %>, <%= customer.area %><% } %>
+                                    <% if (customer.postal_code) { %> - <%= customer.postal_code %><% } %>
+                                </p>
+                                <% if (customer.landmark) { %>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-landmark"></i> Landmark: <%= customer.landmark %>
+                                </p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <% if (customer.notes) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sticky-note"></i> Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0"><%= customer.notes %></p>
+                    </div>
+                </div>
+                <% } %>
+
+                <!-- Order History -->
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-history"></i> Order History</h5>
+                        <a href="/orders/add?customer=<%= customer.id %>" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus-circle"></i> New Order
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <% if (orders && orders.length > 0) { %>
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Order #</th>
+                                            <th>Type</th>
+                                            <th>Items</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <% orders.forEach(order => { %>
+                                        <tr>
+                                            <td>
+                                                <a href="/orders/<%= order.id %>" class="text-decoration-none">
+                                                    <strong><%= order.order_number %></strong>
+                                                </a>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-<%= order.order_type === 'subscription' ? 'info' : 'warning' %>">
+                                                    <%= order.order_type %>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <%= order.bottle_type %> × <%= order.quantity_per_delivery %>
+                                                <% if (order.order_type === 'subscription') { %>
+                                                    <br><small class="text-muted">
+                                                        <%= order.bottles_delivered || 0 %>/<%= order.total_bottles_ordered || '∞' %> delivered
+                                                    </small>
+                                                <% } %>
+                                            </td>
+                                            <td>Rs. <%= parseFloat(order.total_amount || 0).toLocaleString() %></td>
+                                            <td>
+                                                <span class="badge bg-<%= order.order_status === 'confirmed' || order.order_status === 'in-progress' ? 'success' : order.order_status === 'completed' ? 'primary' : order.order_status === 'cancelled' ? 'danger' : 'warning' %>">
+                                                    <%= order.order_status || 'pending' %>
+                                                </span>
+                                            </td>
+                                            <td><%= new Date(order.created_at).toLocaleDateString() %></td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="/orders/<%= order.id %>" class="btn btn-outline-info">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <% if (order.order_status !== 'completed' && order.order_status !== 'cancelled') { %>
+                                                    <a href="/orders/<%= order.id %>/edit" class="btn btn-outline-warning">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center py-4">
+                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">No orders yet</h6>
+                                <p class="text-muted">This customer hasn't placed any orders yet.</p>
+                                <a href="/orders/add?customer=<%= customer.id %>" class="btn btn-primary">
+                                    <i class="fas fa-plus-circle"></i> Create First Order
+                                </a>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <!-- Quick Stats -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-bar"></i> Customer Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <h4 class="text-primary"><%= orders ? orders.length : 0 %></h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <h4 class="text-success">
+                                    <%
+                                        var activeCount = 0;
+                                        if (orders) {
+                                            for (var i = 0; i < orders.length; i++) {
+                                                if (orders[i].order_status === 'confirmed' || orders[i].order_status === 'in-progress') {
+                                                    activeCount++;
+                                                }
+                                            }
+                                        }
+                                    %>
+                                    <%= activeCount %>
+                                </h4>
+                                <small class="text-muted">Active Orders</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-info">
+                                    <%
+                                        var totalValue = 0;
+                                        if (orders) {
+                                            for (var i = 0; i < orders.length; i++) {
+                                                totalValue += parseFloat(orders[i].total_amount) || 0;
+                                            }
+                                        }
+                                    %>
+                                    <%= totalValue.toLocaleString() %>
+                                </h4>
+                                <small class="text-muted">Total Value (Rs.)</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-warning">
+                                    <%= new Date(customer.created_at).toLocaleDateString() === new Date().toLocaleDateString() ? 'Today' : Math.floor((new Date() - new Date(customer.created_at)) / (1000 * 60 * 60 * 24)) + ' days' %>
+                                </h4>
+                                <small class="text-muted">Customer Since</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Balance -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-wallet"></i> Account Balance</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center">
+                            <h3 class="<%= (customer.current_balance || 0) < 0 ? 'text-danger' : 'text-success' %>">
+                                Rs. <%= parseFloat(customer.current_balance || 0).toLocaleString() %>
+                            </h3>
+                            <p class="text-muted mb-3">Current Balance</p>
+                            
+                            <div class="progress mb-3">
+                                <%
+                                    var balancePercentage = Math.min(100, Math.max(0, ((customer.current_balance || 0) / (customer.credit_limit || 1)) * 100));
+                                %>
+                                <div class="progress-bar <%= (customer.current_balance || 0) < 0 ? 'bg-danger' : 'bg-success' %>" 
+                                     style="width: <%= Math.abs(balancePercentage) %>%;">
+                                </div>
+                            </div>
+                            
+                            <small class="text-muted">
+                                Credit Limit: Rs. <%= parseFloat(customer.credit_limit || 0).toLocaleString() %>
+                            </small>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-success btn-sm" onclick="addBalance('<%= customer.id %>')">
+                                <i class="fas fa-plus"></i> Add Payment
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="deductBalance('<%= customer.id %>')">
+                                <i class="fas fa-minus"></i> Deduct Amount
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/customers/<%= customer.id %>/edit" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Edit Customer
+                            </a>
+                            <a href="/orders/add?customer=<%= customer.id %>" class="btn btn-success btn-sm">
+                                <i class="fas fa-plus-circle"></i> Create Order
+                            </a>
+                            <button class="btn btn-info btn-sm" onclick="sendSMS('<%= customer.phone_primary %>')">
+                                <i class="fas fa-sms"></i> Send SMS
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="duplicateCustomer('<%= customer.id %>')">
+                                <i class="fas fa-copy"></i> Duplicate Customer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Adjustment Modal -->
+    <div class="modal fade" id="balanceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="balanceModalTitle">Adjust Balance</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="balanceForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="balance_customer_id" value="<%= customer.id %>">
+                        <input type="hidden" id="balance_operation" value="">
+                        
+                        <div class="mb-3">
+                            <label for="balance_amount" class="form-label">Amount (Rs.)</label>
+                            <input type="number" class="form-control" id="balance_amount" name="amount" 
+                                   min="0" step="0.01" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="balance_reason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="balance_reason" name="reason" 
+                                      rows="3" placeholder="Reason for balance adjustment..."></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Current Balance: <strong>Rs. <%= parseFloat(customer.current_balance || 0).toLocaleString() %></strong>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="balanceSubmitBtn">Update Balance</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        function addBalance(customerId) {
+            document.getElementById('balance_customer_id').value = customerId;
+            document.getElementById('balance_operation').value = 'add';
+            document.getElementById('balanceModalTitle').textContent = 'Add Payment';
+            document.getElementById('balanceSubmitBtn').textContent = 'Add Payment';
+            document.getElementById('balanceSubmitBtn').className = 'btn btn-success';
+            new bootstrap.Modal(document.getElementById('balanceModal')).show();
+        }
+
+        function deductBalance(customerId) {
+            document.getElementById('balance_customer_id').value = customerId;
+            document.getElementById('balance_operation').value = 'deduct';
+            document.getElementById('balanceModalTitle').textContent = 'Deduct Amount';
+            document.getElementById('balanceSubmitBtn').textContent = 'Deduct Amount';
+            document.getElementById('balanceSubmitBtn').className = 'btn btn-warning';
+            new bootstrap.Modal(document.getElementById('balanceModal')).show();
+        }
+
+        function suspendCustomer(customerId) {
+            if (confirm('Are you sure you want to suspend this customer?')) {
+                fetch(`/customers/${customerId}/suspend`, { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Error suspending customer: ' + data.message);
+                        }
+                    });
+            }
+        }
+
+        function sendSMS(phoneNumber) {
+            const message = prompt('Enter message to send:');
+            if (message) {
+                alert(`SMS functionality would send: "${message}" to ${phoneNumber}`);
+            }
+        }
+
+        function duplicateCustomer(customerId) {
+            if (confirm('Create a new customer based on this customer\'s information?')) {
+                window.location.href = `/customers/add?duplicate=${customerId}`;
+            }
+        }
+
+        function printCustomer() {
+            window.print();
+        }
+
+        // Handle balance form submission
+        document.getElementById('balanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const customerId = document.getElementById('balance_customer_id').value;
+            const operation = document.getElementById('balance_operation').value;
+            
+            const data = {
+                operation: operation,
+                amount: formData.get('amount'),
+                reason: formData.get('reason')
+            };
+            
+            fetch(`/customers/${customerId}/balance`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('balanceModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error updating balance: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating balance');
+            });
+        });
+    </script>
+</body>
+</html>
