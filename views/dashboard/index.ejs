@@ -98,23 +98,34 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <a href="/bottles" class="btn btn-primary w-100">
+                                    <i class="fas fa-wine-bottle"></i> View Bottles
+                                </a>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <a href="/bottles/add" class="btn btn-success w-100">
+                                    <i class="fas fa-plus"></i> Add Bottle
+                                </a>
+                            </div>
                             <% if (currentUser.role === 'admin') { %>
-                                <div class="col-md-4 mb-3">
-                                    <a href="/dashboard/users/add" class="btn btn-primary w-100">
+                                <div class="col-md-3 mb-3">
+                                    <a href="/dashboard/users/add" class="btn btn-warning w-100">
                                         <i class="fas fa-user-plus"></i> Add New User
                                     </a>
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <a href="/dashboard/users" class="btn btn-success w-100">
+                                <div class="col-md-3 mb-3">
+                                    <a href="/dashboard/users" class="btn btn-info w-100">
                                         <i class="fas fa-users-cog"></i> Manage Users
                                     </a>
                                 </div>
+                            <% } else { %>
+                                <div class="col-md-3 mb-3">
+                                    <a href="/dashboard/profile" class="btn btn-info w-100">
+                                        <i class="fas fa-user-cog"></i> My Profile
+                                    </a>
+                                </div>
                             <% } %>
-                            <div class="col-md-4 mb-3">
-                                <a href="/dashboard/profile" class="btn btn-info w-100">
-                                    <i class="fas fa-user-cog"></i> My Profile
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>

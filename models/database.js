@@ -43,17 +43,11 @@ const initializeDatabase = async () => {
         // Create sessions table for session storage
         await pool.query(`
             CREATE TABLE IF NOT EXISTS session (
-                sid VARCHAR NOT NULL COLLATE "default",
+                sid VARCHAR NOT NULL COLLATE "default" PRIMARY KEY,
                 sess JSON NOT NULL,
                 expire TIMESTAMP(6) NOT NULL
             )
             WITH (OIDS=FALSE);
-        `);
-
-        await pool.query(`
-            ALTER TABLE session 
-            ADD CONSTRAINT session_pkey 
-            PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
         `);
 
         // Create login_attempts table for security

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-info-circle"></i> Bottle Details</h1>
+                    <div>
+                        <a href="/bottles/<%= bottle.id %>/edit" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit Bottle
+                        </a>
+                        <a href="/bottles" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Bottle Information -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-wine-bottle"></i> 
+                            Bottle Information - <strong class="text-primary"><%= bottle.bottleCode %></strong>
+                        </h5>
+                        <div>
+                            <span class="badge bg-<%= bottle.status === 'AtPlant' ? 'success' : bottle.status === 'AtCustomer' ? 'warning' : 'info' %> fs-6">
+                                <%= bottle.status.replace('At', 'At ') %>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold text-muted" style="width: 40%;">Bottle Code:</td>
+                                        <td>
+                                            <span class="fs-4 fw-bold text-primary"><%= bottle.bottleCode %></span>
+                                            <button class="btn btn-sm btn-outline-secondary ms-2" 
+                                                    onclick="navigator.clipboard.writeText('<%= bottle.bottleCode %>')">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Bottle Type:</td>
+                                        <td>
+                                            <span class="badge bg-info fs-6"><%= bottle.bottleType %></span>
+                                            (<%= bottle.bottleType.replace('L', ' Liter') %>)
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Current Status:</td>
+                                        <td>
+                                            <select class="form-select form-select-sm d-inline-block" 
+                                                    id="statusSelect" style="width: auto;"
+                                                    data-bottle-id="<%= bottle.id %>">
+                                                <option value="AtPlant" <%= bottle.status === 'AtPlant' ? 'selected' : '' %>>At Plant</option>
+                                                <option value="AtCustomer" <%= bottle.status === 'AtCustomer' ? 'selected' : '' %>>At Customer</option>
+                                                <option value="AtVehicle" <%= bottle.status === 'AtVehicle' ? 'selected' : '' %>>At Vehicle</option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Manufacturing Date:</td>
+                                        <td><%= new Date(bottle.manufacturingDate).toLocaleDateString() %></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Expiry Date:</td>
+                                        <td>
+                                            <span class="<%= bottle.isExpired ? 'text-danger fw-bold' : bottle.isExpiringSoon ? 'text-warning fw-bold' : '' %>">
+                                                <%= new Date(bottle.expiryDate).toLocaleDateString() %>
+                                            </span>
+                                            <% if (bottle.isExpired) { %>
+                                                <span class="badge bg-danger ms-2">Expired</span>
+                                            <% } else if (bottle.isExpiringSoon) { %>
+                                                <span class="badge bg-warning ms-2">Expiring Soon</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Batch Number:</td>
+                                        <td><%= bottle.batchNumber || 'Not specified' %></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="fw-bold text-muted" style="width: 40%;">Created By:</td>
+                                        <td><%= bottle.createdByEmail || 'System' %></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Created At:</td>
+                                        <td><%= new Date(bottle.createdAt).toLocaleString() %></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Last Updated:</td>
+                                        <td><%= new Date(bottle.updatedAt).toLocaleString() %></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Last Status Change:</td>
+                                        <td><%= new Date(bottle.lastStatusChange).toLocaleString() %></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold text-muted">Age:</td>
+                                        <td id="bottleAge">Calculating...</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <% if (bottle.description) { %>
+                            <div class="mt-3">
+                                <h6 class="text-muted">Description:</h6>
+                                <p class="bg-light p-3 rounded"><%= bottle.description %></p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Status History -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-history"></i> Status History</h5>
+                    </div>
+                    <div class="card-body">
+                        <% if (history && history.length > 0) { %>
+                            <div class="timeline">
+                                <% history.forEach(function(entry, index) { %>
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker bg-<%= entry.new_status === 'AtPlant' ? 'success' : entry.new_status === 'AtCustomer' ? 'warning' : 'info' %>">
+                                            <i class="fas fa-<%= entry.new_status === 'AtPlant' ? 'industry' : entry.new_status === 'AtCustomer' ? 'user' : 'truck' %>"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h6 class="mb-1">
+                                                <% if (entry.previous_status) { %>
+                                                    Changed from <span class="text-muted"><%= entry.previous_status.replace('At', 'At ') %></span>
+                                                    to <span class="text-primary"><%= entry.new_status.replace('At', 'At ') %></span>
+                                                <% } else { %>
+                                                    Initial status set to <span class="text-primary"><%= entry.new_status.replace('At', 'At ') %></span>
+                                                <% } %>
+                                            </h6>
+                                            <p class="text-muted mb-1">
+                                                <i class="fas fa-user"></i> <%= entry.changed_by_email || 'System' %>
+                                                <i class="fas fa-clock ms-3"></i> <%= new Date(entry.changed_at).toLocaleString() %>
+                                            </p>
+                                            <% if (entry.change_reason) { %>
+                                                <p class="text-muted small mb-0">
+                                                    <i class="fas fa-comment"></i> <%= entry.change_reason %>
+                                                </p>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } else { %>
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-history fa-3x mb-3"></i>
+                                <p>No status history available</p>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QR Code and Actions -->
+            <div class="col-lg-4">
+                <!-- QR Code Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-qrcode"></i> QR Code</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img src="<%= bottle.qrCodeData %>" alt="QR Code for <%= bottle.bottleCode %>" 
+                             class="img-fluid mb-3" style="max-width: 250px;">
+                        
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-primary" onclick="downloadQRCode()">
+                                <i class="fas fa-download"></i> Download QR Code
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="printQRCode()">
+                                <i class="fas fa-print"></i> Print QR Code
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="shareBottle()">
+                                <i class="fas fa-share"></i> Share Bottle Info
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Scan this QR code to quickly access bottle information
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-sm" onclick="updateStatus('AtPlant')" 
+                                    <%= bottle.status === 'AtPlant' ? 'disabled' : '' %>>
+                                <i class="fas fa-industry"></i> Move to Plant
+                            </button>
+                            <button class="btn btn-warning btn-sm" onclick="updateStatus('AtCustomer')"
+                                    <%= bottle.status === 'AtCustomer' ? 'disabled' : '' %>>
+                                <i class="fas fa-user"></i> Move to Customer
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="updateStatus('AtVehicle')"
+                                    <%= bottle.status === 'AtVehicle' ? 'disabled' : '' %>>
+                                <i class="fas fa-truck"></i> Move to Vehicle
+                            </button>
+                            
+                            <hr>
+                            
+                            <a href="/bottles/<%= bottle.id %>/edit" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-edit"></i> Edit Details
+                            </a>
+                            
+                            <form method="POST" action="/bottles/<%= bottle.id %>/delete" class="mt-2">
+                                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                                <button type="submit" class="btn btn-outline-danger btn-sm w-100" 
+                                        onclick="return confirm('Are you sure you want to delete this bottle?')">
+                                    <i class="fas fa-trash"></i> Delete Bottle
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottle Statistics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Bottle Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <div class="bg-primary text-white rounded p-2">
+                                    <i class="fas fa-calendar-day fa-2x"></i>
+                                    <div class="mt-2">
+                                        <small>Days Since<br>Creation</small>
+                                        <div class="fw-bold" id="daysSinceCreation">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <div class="bg-<%= bottle.isExpired ? 'danger' : bottle.isExpiringSoon ? 'warning' : 'success' %> text-white rounded p-2">
+                                    <i class="fas fa-<%= bottle.isExpired ? 'exclamation-triangle' : bottle.isExpiringSoon ? 'clock' : 'check-circle' %> fa-2x"></i>
+                                    <div class="mt-2">
+                                        <small>Days Until<br>Expiry</small>
+                                        <div class="fw-bold" id="daysUntilExpiry">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <small class="text-muted">
+                                Status changes: <span class="fw-bold"><%= history.length %></span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calculate and display bottle age and expiry information
+            function calculateDates() {
+                const createdDate = new Date('<%= bottle.createdAt %>');
+                const expiryDate = new Date('<%= bottle.expiryDate %>');
+                const now = new Date();
+                
+                // Days since creation
+                const daysSinceCreation = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('daysSinceCreation').textContent = daysSinceCreation;
+                
+                // Days until expiry
+                const daysUntilExpiry = Math.ceil((expiryDate - now) / (1000 * 60 * 60 * 24));
+                document.getElementById('daysUntilExpiry').textContent = daysUntilExpiry;
+                
+                // Bottle age display
+                let ageText = '';
+                if (daysSinceCreation < 30) {
+                    ageText = `${daysSinceCreation} days old`;
+                } else if (daysSinceCreation < 365) {
+                    const months = Math.floor(daysSinceCreation / 30);
+                    ageText = `${months} month${months > 1 ? 's' : ''} old`;
+                } else {
+                    const years = Math.floor(daysSinceCreation / 365);
+                    const remainingMonths = Math.floor((daysSinceCreation % 365) / 30);
+                    ageText = `${years} year${years > 1 ? 's' : ''}`;
+                    if (remainingMonths > 0) {
+                        ageText += `, ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
+                    }
+                    ageText += ' old';
+                }
+                document.getElementById('bottleAge').textContent = ageText;
+            }
+            
+            calculateDates();
+
+            // Status update functionality
+            const statusSelect = document.getElementById('statusSelect');
+            statusSelect.addEventListener('change', async function() {
+                const newStatus = this.value;
+                const bottleId = this.dataset.bottleId;
+                
+                try {
+                    const response = await fetch(`/bottles/${bottleId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        utils.showToast(result.message, 'success');
+                        // Refresh page to show updated history
+                        setTimeout(() => window.location.reload(), 1000);
+                    } else {
+                        utils.showToast(result.message, 'error');
+                        // Revert selection
+                        this.value = '<%= bottle.status %>';
+                    }
+                } catch (error) {
+                    console.error('Status update error:', error);
+                    utils.showToast('Error updating status', 'error');
+                    this.value = '<%= bottle.status %>';
+                }
+            });
+        });
+
+        // Quick status update functions
+        async function updateStatus(newStatus) {
+            const bottleId = '<%= bottle.id %>';
+            
+            try {
+                const response = await fetch(`/bottles/${bottleId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    utils.showToast(result.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    utils.showToast(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Status update error:', error);
+                utils.showToast('Error updating status', 'error');
+            }
+        }
+
+        // QR Code functions
+        function downloadQRCode() {
+            const qrImage = document.querySelector('img[alt*="QR Code"]');
+            const link = document.createElement('a');
+            link.download = `qr-code-<%= bottle.bottleCode %>.png`;
+            link.href = qrImage.src;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            utils.showToast('QR Code downloaded', 'success');
+        }
+
+        function printQRCode() {
+            const qrImage = document.querySelector('img[alt*="QR Code"]');
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>QR Code - <%= bottle.bottleCode %></title>
+                        <style>
+                            body { text-align: center; font-family: Arial, sans-serif; }
+                            img { max-width: 300px; }
+                            .info { margin: 20px 0; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="info">
+                            <h2>Bottle <%= bottle.bottleCode %></h2>
+                            <p>Type: <%= bottle.bottleType %> | Status: <%= bottle.status.replace('At', 'At ') %></p>
+                        </div>
+                        <img src="${qrImage.src}" alt="QR Code">
+                        <div class="info">
+                            <p>Generated: ${new Date().toLocaleString()}</p>
+                        </div>
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function shareBottle() {
+            const bottleInfo = 'Bottle <%= bottle.bottleCode %>\n' +
+                'Type: <%= bottle.bottleType %>\n' +
+                'Status: <%= bottle.status.replace("At", "At ") %>\n' +
+                'Created: <%= new Date(bottle.createdAt).toLocaleDateString() %>\n' +
+                'Expires: <%= new Date(bottle.expiryDate).toLocaleDateString() %>';
+
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Bottle Information',
+                    text: bottleInfo,
+                    url: window.location.href
+                });
+            } else {
+                // Fallback to clipboard
+                navigator.clipboard.writeText(bottleInfo + '\n\n' + window.location.href)
+                    .then(() => utils.showToast('Bottle info copied to clipboard', 'success'))
+                    .catch(() => utils.showToast('Could not copy to clipboard', 'error'));
+            }
+        }
+    </script>
+
+    <style>
+        .timeline {
+            position: relative;
+            padding-left: 3rem;
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .timeline-item:not(:last-child):before {
+            content: '';
+            position: absolute;
+            left: -2.5rem;
+            top: 3rem;
+            width: 2px;
+            height: calc(100% + 1rem);
+            background: #dee2e6;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            left: -3rem;
+            top: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        .timeline-content {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 3px solid #007bff;
+        }
+        
+        .qr-code-img:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</body>
+</html>

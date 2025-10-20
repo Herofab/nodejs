@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 3000;
 // Import routes
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
+const bottleRoutes = require('./routes/bottles');
 
 // Middleware
 app.use(express.json());
@@ -50,6 +51,7 @@ app.use((req, res, next) => {
 // Routes
 app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/bottles', bottleRoutes);
 
 // Root route - redirect to login
 app.get('/', (req, res) => {

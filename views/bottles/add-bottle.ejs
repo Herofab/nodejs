@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h1><i class="fas fa-plus-circle"></i> Add New Bottle</h1>
+                    <a href="/bottles" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Bottles
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-wine-bottle"></i> Bottle Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/bottles/add" method="POST" data-validate>
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="bottleType" class="form-label">
+                                        <i class="fas fa-wine-bottle"></i> Bottle Type *
+                                    </label>
+                                    <select class="form-select" id="bottleType" name="bottleType" required>
+                                        <option value="">Select Bottle Type</option>
+                                        <option value="0.5L" <%= formData.bottleType === '0.5L' ? 'selected' : '' %>>0.5 Liter</option>
+                                        <option value="1L" <%= formData.bottleType === '1L' ? 'selected' : '' %>>1 Liter</option>
+                                        <option value="5L" <%= formData.bottleType === '5L' ? 'selected' : '' %>>5 Liter</option>
+                                        <option value="20L" <%= formData.bottleType === '20L' ? 'selected' : '' %>>20 Liter</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label for="batchNumber" class="form-label">
+                                        <i class="fas fa-barcode"></i> Batch Number
+                                    </label>
+                                    <input type="text" class="form-control" id="batchNumber" name="batchNumber" 
+                                           maxlength="50" placeholder="Optional batch number"
+                                           value="<%= formData.batchNumber || '' %>">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="expiryDate" class="form-label">
+                                        <i class="fas fa-calendar"></i> Expiry Date
+                                    </label>
+                                    <input type="date" class="form-control" id="expiryDate" name="expiryDate" 
+                                           value="<%= formData.expiryDate || '' %>">
+                                    <div class="form-text">Leave blank for default 2 years from today</div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        <i class="fas fa-info-circle"></i> Status
+                                    </label>
+                                    <input type="text" class="form-control" value="At Plant (Default)" readonly>
+                                    <div class="form-text">New bottles are automatically set to "At Plant"</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    <i class="fas fa-file-text"></i> Description
+                                </label>
+                                <textarea class="form-control" id="description" name="description" rows="3" 
+                                          maxlength="500" placeholder="Optional description or notes about this bottle"><%= formData.description || '' %></textarea>
+                                <div class="form-text">
+                                    <span id="charCount">0</span>/500 characters
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-12">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-lightbulb"></i>
+                                        <strong>What happens when you create a bottle:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            <li>A unique 6-digit bottle code will be automatically generated</li>
+                                            <li>A QR code containing bottle information will be created</li>
+                                            <li>The bottle will be set to "At Plant" status by default</li>
+                                            <li>All bottle data will be encrypted and stored securely</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="/bottles" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Create Bottle
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Preview Card -->
+                <div class="card mt-4" id="previewCard" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-eye"></i> Bottle Preview</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Type:</strong></td>
+                                        <td><span id="previewType">-</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Batch:</strong></td>
+                                        <td><span id="previewBatch">-</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Expiry:</strong></td>
+                                        <td><span id="previewExpiry">-</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Description:</strong></td>
+                                        <td><span id="previewDescription">-</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="border rounded p-3">
+                                    <i class="fas fa-qrcode fa-3x text-muted mb-2"></i>
+                                    <p class="mb-0 small text-muted">QR Code will be generated<br>after creation</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form[data-validate]');
+            const descriptionInput = document.getElementById('description');
+            const charCount = document.getElementById('charCount');
+            const previewCard = document.getElementById('previewCard');
+            
+            // Character count for description
+            function updateCharCount() {
+                const count = descriptionInput.value.length;
+                charCount.textContent = count;
+                charCount.className = count > 450 ? 'text-warning' : count > 480 ? 'text-danger' : '';
+            }
+            
+            descriptionInput.addEventListener('input', updateCharCount);
+            updateCharCount();
+
+            // Set default expiry date (2 years from now)
+            const expiryInput = document.getElementById('expiryDate');
+            if (!expiryInput.value) {
+                const defaultExpiry = new Date();
+                defaultExpiry.setFullYear(defaultExpiry.getFullYear() + 2);
+                expiryInput.value = defaultExpiry.toISOString().split('T')[0];
+            }
+
+            // Live preview functionality
+            const formInputs = form.querySelectorAll('select, input, textarea');
+            
+            function updatePreview() {
+                const bottleType = document.getElementById('bottleType').value;
+                const batchNumber = document.getElementById('batchNumber').value;
+                const expiryDate = document.getElementById('expiryDate').value;
+                const description = document.getElementById('description').value;
+                
+                if (bottleType) {
+                    previewCard.style.display = 'block';
+                    
+                    document.getElementById('previewType').textContent = bottleType.replace('L', ' Liter') || '-';
+                    document.getElementById('previewBatch').textContent = batchNumber || 'Not specified';
+                    document.getElementById('previewExpiry').textContent = expiryDate ? new Date(expiryDate).toLocaleDateString() : 'Default (2 years)';
+                    document.getElementById('previewDescription').textContent = description || 'No description';
+                } else {
+                    previewCard.style.display = 'none';
+                }
+            }
+            
+            formInputs.forEach(input => {
+                input.addEventListener('input', updatePreview);
+                input.addEventListener('change', updatePreview);
+            });
+            
+            updatePreview();
+
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                const bottleType = document.getElementById('bottleType').value;
+                
+                if (!bottleType) {
+                    e.preventDefault();
+                    utils.showToast('Please select a bottle type', 'error');
+                    document.getElementById('bottleType').focus();
+                    return false;
+                }
+                
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating...';
+                
+                // Re-enable button after 5 seconds as fallback
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }, 5000);
+            });
+
+            // Auto-generate batch number suggestion
+            const batchInput = document.getElementById('batchNumber');
+            const generateBatchBtn = document.createElement('button');
+            generateBatchBtn.type = 'button';
+            generateBatchBtn.className = 'btn btn-outline-secondary btn-sm mt-1';
+            generateBatchBtn.innerHTML = '<i class="fas fa-magic"></i> Generate';
+            generateBatchBtn.onclick = function() {
+                const today = new Date();
+                const batch = 'B' + today.getFullYear() + 
+                             String(today.getMonth() + 1).padStart(2, '0') + 
+                             String(today.getDate()).padStart(2, '0') + 
+                             Math.random().toString(36).substr(2, 3).toUpperCase();
+                batchInput.value = batch;
+                updatePreview();
+            };
+            
+            batchInput.parentNode.appendChild(generateBatchBtn);
+        });
+    </script>
+</body>
+</html>
