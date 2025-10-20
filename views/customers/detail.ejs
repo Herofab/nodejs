@@ -331,9 +331,11 @@
                             <div class="progress mb-3">
                                 <%
                                     var balancePercentage = Math.min(100, Math.max(0, ((customer.current_balance || 0) / (customer.credit_limit || 1)) * 100));
+                                    var widthPercentage = Math.abs(balancePercentage);
+                                    var progressBarStyle = 'width: ' + widthPercentage + '%';
                                 %>
                                 <div class="progress-bar <%= (customer.current_balance || 0) < 0 ? 'bg-danger' : 'bg-success' %>" 
-                                     style="width: <%= Math.abs(balancePercentage) %>%;">
+                                     style="width: <%= widthPercentage %>%">
                                 </div>
                             </div>
                             
