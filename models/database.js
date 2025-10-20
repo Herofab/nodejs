@@ -195,6 +195,76 @@ const initializeDatabase = async () => {
             )
         `);
 
+        // Create vehicles table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS vehicles (
+                id SERIAL PRIMARY KEY,
+                license_plate VARCHAR(20) UNIQUE NOT NULL,
+                vehicle_type VARCHAR(20) NOT NULL CHECK (vehicle_type IN ('truck', 'van', 'motorcycle', 'car')),
+                brand VARCHAR(50),
+                model VARCHAR(50),
+                year INTEGER,
+                capacity INTEGER DEFAULT 0,
+                status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'maintenance', 'inactive')),
+                fuel_type VARCHAR(20) DEFAULT 'petrol' CHECK (fuel_type IN ('petrol', 'diesel', 'electric', 'hybrid')),
+                registration_date DATE,
+                insurance_expiry DATE,
+                last_maintenance DATE,
+                notes TEXT,
+                created_by INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create drivers table
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS drivers (
+                id SERIAL PRIMARY KEY,
+                full_name VARCHAR(255) NOT NULL,
+                cnic VARCHAR(15) UNIQUE NOT NULL,
+                phone_primary VARCHAR(20) NOT NULL,
+                phone_secondary VARCHAR(20),
+                email VARCHAR(255),
+                license_number VARCHAR(50) UNIQUE NOT NULL,
+                license_type VARCHAR(20) NOT NULL CHECK (license_type IN ('motorcycle', 'car', 'truck', 'heavy')),
+                license_expiry DATE NOT NULL,
+                address TEXT,
+                city VARCHAR(100),
+                emergency_contact_name VARCHAR(255),
+                emergency_contact_phone VARCHAR(20),
+                assigned_vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE SET NULL,
+                status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'on_leave')),
+                hire_date DATE DEFAULT CURRENT_DATE,
+                salary DECIMAL(10,2),
+                experience_years INTEGER DEFAULT 0,
+                notes TEXT,
+                created_by INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        // Create order_assignments table for daily order assignments to drivers/vehicles
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS order_assignments (
+                id SERIAL PRIMARY KEY,
+                order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
+                driver_id INTEGER REFERENCES drivers(id) ON DELETE SET NULL,
+                vehicle_id INTEGER REFERENCES vehicles(id) ON DELETE SET NULL,
+                assigned_date DATE NOT NULL DEFAULT CURRENT_DATE,
+                delivery_sequence INTEGER,
+                estimated_delivery_time TIME,
+                actual_delivery_time TIME,
+                delivery_status VARCHAR(20) DEFAULT 'assigned' CHECK (delivery_status IN ('assigned', 'in_progress', 'delivered', 'failed', 'rescheduled')),
+                notes TEXT,
+                assigned_by INTEGER REFERENCES users(id),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(order_id, assigned_date)
+            )
+        `);
+
         // Create default admin user if not exists
         const adminExists = await pool.query('SELECT id FROM users WHERE email = $1', ['admin@dashboard.com']);
         

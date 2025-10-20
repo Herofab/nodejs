@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Vehicles</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-truck text-primary"></i> Vehicle Management</h1>
+                        <p class="text-muted mb-0">Manage your delivery fleet</p>
+                    </div>
+                    <a href="/vehicles/add" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add New Vehicle
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Vehicles</h6>
+                                <h3 class="mb-0" id="totalVehicles">
+                                    <%= vehicles ? vehicles.length : 0 %>
+                                </h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-truck fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Active</h6>
+                                <h3 class="mb-0">
+                                    <%= vehicles ? vehicles.filter(v => v.status === 'active').length : 0 %>
+                                </h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Maintenance</h6>
+                                <h3 class="mb-0">
+                                    <%= vehicles ? vehicles.filter(v => v.status === 'maintenance').length : 0 %>
+                                </h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-wrench fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Capacity</h6>
+                                <h3 class="mb-0">
+                                    <%= vehicles ? vehicles.reduce((sum, v) => sum + (v.capacity || 0), 0) : 0 %>
+                                </h3>
+                                <small>bottles</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-box fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Search & Filter</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="/vehicles">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="search" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="search" name="search" 
+                                           value="<%= filters.search %>" placeholder="License plate, brand, model...">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">All Status</option>
+                                        <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                                        <option value="maintenance" <%= filters.status === 'maintenance' ? 'selected' : '' %>>Maintenance</option>
+                                        <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="vehicle_type" class="form-label">Vehicle Type</label>
+                                    <select class="form-select" id="vehicle_type" name="vehicle_type">
+                                        <option value="">All Types</option>
+                                        <option value="truck" <%= filters.vehicle_type === 'truck' ? 'selected' : '' %>>Truck</option>
+                                        <option value="van" <%= filters.vehicle_type === 'van' ? 'selected' : '' %>>Van</option>
+                                        <option value="motorcycle" <%= filters.vehicle_type === 'motorcycle' ? 'selected' : '' %>>Motorcycle</option>
+                                        <option value="car" <%= filters.vehicle_type === 'car' ? 'selected' : '' %>>Car</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicles Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Vehicles List</h5>
+                        <div>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="loadMaintenanceAlerts()">
+                                <i class="fas fa-exclamation-triangle"></i> Maintenance Alerts
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <% if (vehicles && vehicles.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>License Plate</th>
+                                        <th>Vehicle Details</th>
+                                        <th>Capacity</th>
+                                        <th>Status</th>
+                                        <th>Assigned Drivers</th>
+                                        <th>Insurance</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% vehicles.forEach(vehicle => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= vehicle.license_plate %></strong>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong><%= vehicle.brand %> <%= vehicle.model %></strong>
+                                                <% if (vehicle.year) { %>
+                                                    (<%= vehicle.year %>)
+                                                <% } %>
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-<%= vehicle.vehicle_type === 'truck' ? 'truck' : vehicle.vehicle_type === 'van' ? 'shuttle-van' : vehicle.vehicle_type === 'motorcycle' ? 'motorcycle' : 'car' %>"></i>
+                                                <%= vehicle.vehicle_type.charAt(0).toUpperCase() + vehicle.vehicle_type.slice(1) %>
+                                                <% if (vehicle.fuel_type) { %>
+                                                    • <%= vehicle.fuel_type.charAt(0).toUpperCase() + vehicle.fuel_type.slice(1) %>
+                                                <% } %>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <% if (vehicle.capacity > 0) { %>
+                                                <span class="badge bg-info"><%= vehicle.capacity %> bottles</span>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (vehicle.status === 'active') { %>
+                                                <span class="badge bg-success">Active</span>
+                                            <% } else if (vehicle.status === 'maintenance') { %>
+                                                <span class="badge bg-warning">Maintenance</span>
+                                            <% } else { %>
+                                                <span class="badge bg-danger">Inactive</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (vehicle.assigned_drivers > 0) { %>
+                                                <span class="badge bg-primary"><%= vehicle.assigned_drivers %> driver(s)</span>
+                                            <% } else { %>
+                                                <span class="text-muted">No drivers</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (vehicle.insurance_expiry) { %>
+                                                <% 
+                                                    const expiryDate = new Date(vehicle.insurance_expiry);
+                                                    const today = new Date();
+                                                    const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                                                %>
+                                                <% if (daysToExpiry <= 30 && daysToExpiry > 0) { %>
+                                                    <span class="badge bg-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <%= daysToExpiry %> days
+                                                    </span>
+                                                <% } else if (daysToExpiry <= 0) { %>
+                                                    <span class="badge bg-danger">
+                                                        <i class="fas fa-times"></i>
+                                                        Expired
+                                                    </span>
+                                                <% } else { %>
+                                                    <small class="text-muted"><%= expiryDate.toLocaleDateString() %></small>
+                                                <% } %>
+                                            <% } else { %>
+                                                <span class="text-muted">-</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/vehicles/<%= vehicle.id %>" class="btn btn-outline-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/vehicles/<%= vehicle.id %>/edit" class="btn btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <% if (vehicle.status !== 'inactive') { %>
+                                                <button class="btn btn-outline-danger" onclick="deleteVehicle(<%= vehicle.id %>, '<%= vehicle.license_plate %>')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (pagination.totalPages > 1) { %>
+                        <nav aria-label="Vehicle pagination">
+                            <ul class="pagination justify-content-center">
+                                <% if (pagination.page > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= pagination.page - 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_type=<%= filters.vehicle_type %>">
+                                        Previous
+                                    </a>
+                                </li>
+                                <% } %>
+                                
+                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_type=<%= filters.vehicle_type %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                                <% } %>
+                                
+                                <% if (pagination.page < pagination.totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= pagination.page + 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_type=<%= filters.vehicle_type %>">
+                                        Next
+                                    </a>
+                                </li>
+                                <% } %>
+                            </ul>
+                        </nav>
+                        <% } %>
+
+                        <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No vehicles found</h6>
+                            <p class="text-muted">Add your first vehicle to get started with fleet management.</p>
+                            <a href="/vehicles/add" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </a>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Maintenance Alerts Modal -->
+    <div class="modal fade" id="maintenanceAlertsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        Maintenance Alerts
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="maintenanceAlertsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        function deleteVehicle(vehicleId, licensePlate) {
+            if (confirm(`Are you sure you want to delete vehicle ${licensePlate}? This action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/vehicles/${vehicleId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function loadMaintenanceAlerts() {
+            const modal = new bootstrap.Modal(document.getElementById('maintenanceAlertsModal'));
+            modal.show();
+
+            fetch('/vehicles/api/maintenance-alerts')
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('maintenanceAlertsContent');
+                    
+                    if (data.success && data.alerts.length > 0) {
+                        let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Vehicle</th><th>Alert Type</th><th>Details</th></tr></thead><tbody>';
+                        
+                        data.alerts.forEach(alert => {
+                            html += `
+                                <tr>
+                                    <td><strong>${alert.license_plate}</strong><br><small>${alert.brand} ${alert.model}</small></td>
+                                    <td>
+                                        ${alert.alert_type === 'insurance_expiry' ? 
+                                            '<span class="badge bg-warning">Insurance Expiry</span>' : 
+                                            '<span class="badge bg-info">Maintenance Due</span>'}
+                                    </td>
+                                    <td>
+                                        ${alert.alert_type === 'insurance_expiry' ? 
+                                            `Insurance expires: ${new Date(alert.insurance_expiry).toLocaleDateString()}` : 
+                                            `Last maintenance: ${new Date(alert.last_maintenance).toLocaleDateString()}`}
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        content.innerHTML = html;
+                    } else {
+                        content.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                <h6 class="text-success">All vehicles are up to date!</h6>
+                                <p class="text-muted">No maintenance alerts at this time.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading maintenance alerts:', error);
+                    document.getElementById('maintenanceAlertsContent').innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <h6 class="text-danger">Error loading alerts</h6>
+                            <p class="text-muted">Please try again later.</p>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>

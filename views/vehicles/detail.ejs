@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/vehicles">Vehicles</a></li>
+                        <li class="breadcrumb-item active"><%= vehicle.license_plate %></li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-truck text-primary"></i> Vehicle Details</h1>
+                        <p class="text-muted mb-0"><%= vehicle.license_plate %> - <%= vehicle.brand %> <%= vehicle.model %></p>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-cog"></i> Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/vehicles/<%= vehicle.id %>/edit">
+                                <i class="fas fa-edit"></i> Edit Vehicle
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <% if (vehicle.status !== 'inactive') { %>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteVehicle('<%= vehicle.id %>', '<%= vehicle.license_plate %>')">
+                                <i class="fas fa-trash"></i> Delete Vehicle
+                            </a></li>
+                            <% } %>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Vehicle Information -->
+            <div class="col-md-8">
+                <!-- Vehicle Status and Basic Info -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-info-circle"></i> Vehicle Information</h5>
+                        <span class="badge bg-<%= vehicle.status === 'active' ? 'success' : vehicle.status === 'maintenance' ? 'warning' : 'danger' %> fs-6">
+                            <%= vehicle.status.toUpperCase() %>
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">License Plate:</th>
+                                        <td><strong><%= vehicle.license_plate %></strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vehicle Type:</th>
+                                        <td>
+                                            <i class="fas fa-<%= vehicle.vehicle_type === 'truck' ? 'truck' : vehicle.vehicle_type === 'van' ? 'shuttle-van' : vehicle.vehicle_type === 'motorcycle' ? 'motorcycle' : 'car' %>"></i>
+                                            <%= vehicle.vehicle_type.charAt(0).toUpperCase() + vehicle.vehicle_type.slice(1) %>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Brand:</th>
+                                        <td><%= vehicle.brand %></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Model:</th>
+                                        <td><%= vehicle.model %></td>
+                                    </tr>
+                                    <% if (vehicle.year) { %>
+                                    <tr>
+                                        <th>Year:</th>
+                                        <td><%= vehicle.year %></td>
+                                    </tr>
+                                    <% } %>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <th width="40%">Capacity:</th>
+                                        <td>
+                                            <% if (vehicle.capacity > 0) { %>
+                                                <span class="badge bg-info"><%= vehicle.capacity %> bottles</span>
+                                            <% } else { %>
+                                                <span class="text-muted">Not specified</span>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Fuel Type:</th>
+                                        <td>
+                                            <i class="fas fa-<%= vehicle.fuel_type === 'electric' ? 'bolt' : 'gas-pump' %>"></i>
+                                            <%= vehicle.fuel_type.charAt(0).toUpperCase() + vehicle.fuel_type.slice(1) %>
+                                        </td>
+                                    </tr>
+                                    <% if (vehicle.registration_date) { %>
+                                    <tr>
+                                        <th>Registration:</th>
+                                        <td><%= new Date(vehicle.registration_date).toLocaleDateString() %></td>
+                                    </tr>
+                                    <% } %>
+                                    <tr>
+                                        <th>Created:</th>
+                                        <td><%= new Date(vehicle.created_at).toLocaleDateString() %></td>
+                                    </tr>
+                                    <% if (vehicle.created_by_email) { %>
+                                    <tr>
+                                        <th>Created By:</th>
+                                        <td><%= vehicle.created_by_email %></td>
+                                    </tr>
+                                    <% } %>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insurance & Maintenance -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-shield-alt"></i> Insurance & Maintenance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Insurance Status</h6>
+                                <% if (vehicle.insurance_expiry) { %>
+                                    <% 
+                                        const expiryDate = new Date(vehicle.insurance_expiry);
+                                        const today = new Date();
+                                        const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                                    %>
+                                    <p>
+                                        <strong>Expires:</strong> <%= expiryDate.toLocaleDateString() %>
+                                        <% if (daysToExpiry <= 30 && daysToExpiry > 0) { %>
+                                            <br><span class="badge bg-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                Expires in <%= daysToExpiry %> days
+                                            </span>
+                                        <% } else if (daysToExpiry <= 0) { %>
+                                            <br><span class="badge bg-danger">
+                                                <i class="fas fa-times"></i>
+                                                Expired
+                                            </span>
+                                        <% } else { %>
+                                            <br><span class="badge bg-success">
+                                                <i class="fas fa-check"></i>
+                                                Valid
+                                            </span>
+                                        <% } %>
+                                    </p>
+                                <% } else { %>
+                                    <p class="text-muted">Not specified</p>
+                                <% } %>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Maintenance Status</h6>
+                                <% if (vehicle.last_maintenance) { %>
+                                    <% 
+                                        const maintenanceDate = new Date(vehicle.last_maintenance);
+                                        const daysSinceMaintenance = Math.ceil((today - maintenanceDate) / (1000 * 60 * 60 * 24));
+                                    %>
+                                    <p>
+                                        <strong>Last Maintenance:</strong> <%= maintenanceDate.toLocaleDateString() %>
+                                        <% if (daysSinceMaintenance > 90) { %>
+                                            <br><span class="badge bg-warning">
+                                                <i class="fas fa-wrench"></i>
+                                                Maintenance due
+                                            </span>
+                                        <% } else { %>
+                                            <br><span class="badge bg-success">
+                                                <i class="fas fa-check"></i>
+                                                Up to date
+                                            </span>
+                                        <% } %>
+                                    </p>
+                                <% } else { %>
+                                    <p class="text-muted">Not specified</p>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <% if (vehicle.notes) { %>
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-sticky-note"></i> Notes</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0"><%= vehicle.notes %></p>
+                    </div>
+                </div>
+                <% } %>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-md-4">
+                <!-- Quick Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-bolt"></i> Quick Actions</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="/vehicles/<%= vehicle.id %>/edit" class="btn btn-warning btn-sm">
+                                <i class="fas fa-edit"></i> Edit Vehicle
+                            </a>
+                            <% if (vehicle.status === 'active') { %>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="changeStatus('<%= vehicle.id %>', 'maintenance')">
+                                <i class="fas fa-wrench"></i> Mark for Maintenance
+                            </button>
+                            <% } else if (vehicle.status === 'maintenance') { %>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="changeStatus('<%= vehicle.id %>', 'active')">
+                                <i class="fas fa-check"></i> Mark as Active
+                            </button>
+                            <% } %>
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="viewDrivers('<%= vehicle.id %>')">
+                                <i class="fas fa-users"></i> View Assigned Drivers
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Driver Assignment -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6><i class="fas fa-users"></i> Driver Assignment</h6>
+                    </div>
+                    <div class="card-body">
+                        <% if (vehicle.assigned_drivers > 0) { %>
+                            <p><strong><%= vehicle.assigned_drivers %></strong> driver(s) assigned to this vehicle</p>
+                            <a href="/drivers?vehicle_id=<%= vehicle.id %>" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i> View Drivers
+                            </a>
+                        <% } else { %>
+                            <p class="text-muted">No drivers assigned</p>
+                            <a href="/drivers/add" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-plus"></i> Add Driver
+                            </a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <!-- Vehicle Statistics -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6><i class="fas fa-chart-bar"></i> Vehicle Stats</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <th>Age:</th>
+                                <td>
+                                    <% if (vehicle.year) { %>
+                                        <%= new Date().getFullYear() - vehicle.year %> years
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="badge bg-<%= vehicle.status === 'active' ? 'success' : vehicle.status === 'maintenance' ? 'warning' : 'danger' %>">
+                                        <%= vehicle.status %>
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Updated:</th>
+                                <td>
+                                    <% if (vehicle.updated_at) { %>
+                                        <%= new Date(vehicle.updated_at).toLocaleDateString() %>
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        function deleteVehicle(vehicleId, licensePlate) {
+            if (confirm(`Are you sure you want to delete vehicle ${licensePlate}? This action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/vehicles/${vehicleId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function changeStatus(vehicleId, newStatus) {
+            const statusText = newStatus === 'maintenance' ? 'maintenance' : 'active';
+            
+            if (confirm(`Are you sure you want to mark this vehicle as ${statusText}?`)) {
+                // Create a form to update the status
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/vehicles/${vehicleId}/edit`;
+                
+                // Add status field
+                const statusInput = document.createElement('input');
+                statusInput.type = 'hidden';
+                statusInput.name = 'status';
+                statusInput.value = newStatus;
+                form.appendChild(statusInput);
+                
+                // Add other required fields with current values
+                const requiredFields = {
+                    license_plate: '<%= vehicle.license_plate %>',
+                    vehicle_type: '<%= vehicle.vehicle_type %>',
+                    brand: '<%= vehicle.brand %>',
+                    model: '<%= vehicle.model %>'
+                };
+                
+                for (const [name, value] of Object.entries(requiredFields)) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    input.value = value;
+                    form.appendChild(input);
+                }
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function viewDrivers(vehicleId) {
+            window.location.href = `/drivers?assigned_vehicle_id=${vehicleId}`;
+        }
+    </script>
+</body>
+</html>

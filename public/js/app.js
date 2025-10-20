@@ -206,3 +206,151 @@ window.utils = {
         });
     }
 };
+
+// Vehicle maintenance alerts function
+async function showMaintenanceAlerts(event) {
+    event.preventDefault();
+    
+    try {
+        const response = await fetch('/vehicles/api/maintenance-alerts');
+        const alerts = await response.json();
+        
+        let alertsHtml = '';
+        if (alerts.length === 0) {
+            alertsHtml = '<div class="alert alert-success"><i class="fas fa-check"></i> No maintenance alerts at this time.</div>';
+        } else {
+            alertsHtml = '<div class="list-group">';
+            alerts.forEach(alert => {
+                alertsHtml += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${alert.license_plate} - ${alert.vehicle_type}</h6>
+                            <p class="mb-1 text-muted">${alert.alert_message}</p>
+                            <small>Due: ${new Date(alert.maintenance_due).toLocaleDateString('en-GB')}</small>
+                        </div>
+                        <span class="badge bg-warning rounded-pill">${alert.days_overdue > 0 ? 'Overdue' : 'Due Soon'}</span>
+                    </div>
+                `;
+            });
+            alertsHtml += '</div>';
+        }
+        
+        // Create and show modal
+        const modalHtml = `
+            <div class="modal fade" id="maintenanceAlertsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title">
+                                <i class="fas fa-wrench"></i> Maintenance Alerts
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${alertsHtml}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <a href="/vehicles" class="btn btn-primary">Manage Vehicles</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('maintenanceAlertsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM and show
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('maintenanceAlertsModal'));
+        modal.show();
+        
+        // Clean up after modal is hidden
+        document.getElementById('maintenanceAlertsModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+        
+    } catch (error) {
+        console.error('Error loading maintenance alerts:', error);
+        Utils.showToast('Error loading maintenance alerts', 'error');
+    }
+}
+
+// Driver license alerts function
+async function showLicenseAlerts(event) {
+    event.preventDefault();
+    
+    try {
+        const response = await fetch('/drivers/api/license-alerts');
+        const alerts = await response.json();
+        
+        let alertsHtml = '';
+        if (alerts.length === 0) {
+            alertsHtml = '<div class="alert alert-success"><i class="fas fa-check"></i> No license alerts at this time.</div>';
+        } else {
+            alertsHtml = '<div class="list-group">';
+            alerts.forEach(alert => {
+                alertsHtml += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">${alert.name}</h6>
+                            <p class="mb-1 text-muted">License: ${alert.license_number} (${alert.license_type})</p>
+                            <small>Expires: ${new Date(alert.license_expiry).toLocaleDateString('en-GB')}</small>
+                        </div>
+                        <span class="badge bg-${alert.days_until_expiry < 0 ? 'danger' : 'warning'} rounded-pill">
+                            ${alert.days_until_expiry < 0 ? 'Expired' : `${alert.days_until_expiry} days`}
+                        </span>
+                    </div>
+                `;
+            });
+            alertsHtml += '</div>';
+        }
+        
+        // Create and show modal
+        const modalHtml = `
+            <div class="modal fade" id="licenseAlertsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning text-dark">
+                            <h5 class="modal-title">
+                                <i class="fas fa-exclamation-triangle"></i> License Alerts
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            ${alertsHtml}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <a href="/drivers" class="btn btn-primary">Manage Drivers</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Remove existing modal if any
+        const existingModal = document.getElementById('licenseAlertsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Add modal to DOM and show
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        const modal = new bootstrap.Modal(document.getElementById('licenseAlertsModal'));
+        modal.show();
+        
+        // Clean up after modal is hidden
+        document.getElementById('licenseAlertsModal').addEventListener('hidden.bs.modal', function() {
+            this.remove();
+        });
+        
+    } catch (error) {
+        console.error('Error loading license alerts:', error);
+        Utils.showToast('Error loading license alerts', 'error');
+    }
+}

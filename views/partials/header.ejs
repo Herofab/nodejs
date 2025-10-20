@@ -46,6 +46,45 @@
                             </a></li>
                         </ul>
                     </li>
+
+                    <!-- Vehicles Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="vehiclesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-truck"></i> Vehicles
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/vehicles">
+                                <i class="fas fa-list"></i> All Vehicles
+                            </a></li>
+                            <li><a class="dropdown-item" href="/vehicles/add">
+                                <i class="fas fa-plus-circle"></i> Add Vehicle
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/vehicles/api/maintenance-alerts" onclick="showMaintenanceAlerts(event)">
+                                <i class="fas fa-wrench"></i> Maintenance Alerts
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Drivers Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="driversDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-id-card"></i> Drivers
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/drivers">
+                                <i class="fas fa-list"></i> All Drivers
+                            </a></li>
+                            <li><a class="dropdown-item" href="/drivers/add">
+                                <i class="fas fa-plus-circle"></i> Add Driver
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="/drivers/api/license-alerts" onclick="showLicenseAlerts(event)">
+                                <i class="fas fa-exclamation-triangle"></i> License Alerts
+                            </a></li>
+                        </ul>
+                    </li>
+
                     <% if (user.role === 'admin') { %>
                         <li class="nav-item">
                             <a class="nav-link" href="/dashboard/users">

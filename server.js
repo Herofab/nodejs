@@ -15,6 +15,8 @@ const dashboardRoutes = require('./routes/dashboard');
 const bottleRoutes = require('./routes/bottles');
 const customerRoutes = require('./routes/customers');
 const orderRoutes = require('./routes/orders');
+const vehicleRoutes = require('./routes/vehicles');
+const driverRoutes = require('./routes/drivers');
 
 // Middleware
 app.use(express.json());
@@ -56,6 +58,8 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/bottles', bottleRoutes);
 app.use('/customers', customerRoutes);
 app.use('/orders', orderRoutes);
+app.use('/vehicles', vehicleRoutes);
+app.use('/drivers', driverRoutes);
 
 // Root route - redirect to login
 app.get('/', (req, res) => {

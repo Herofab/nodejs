@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <%- include('../partials/header') %>
+    <%- include('../partials/flash') %>
+    
+    <div class="container mt-4">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Drivers</li>
+                    </ol>
+                </nav>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-id-card text-primary"></i> Driver Management</h1>
+                        <p class="text-muted mb-0">Manage your delivery drivers and vehicle assignments</p>
+                    </div>
+                    <a href="/drivers/add" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add New Driver
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Total Drivers</h6>
+                                <h3 class="mb-0"><%= drivers ? drivers.length : 0 %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-id-card fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">Active</h6>
+                                <h3 class="mb-0"><%= drivers ? drivers.filter(d => d.status === 'active').length : 0 %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">With Vehicles</h6>
+                                <h3 class="mb-0"><%= drivers ? drivers.filter(d => d.assigned_vehicle_id).length : 0 %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-truck fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">On Leave</h6>
+                                <h3 class="mb-0"><%= drivers ? drivers.filter(d => d.status === 'on_leave').length : 0 %></h3>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-calendar-times fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-search"></i> Search & Filter</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="GET" action="/drivers">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="search" class="form-label">Search</label>
+                                    <input type="text" class="form-control" id="search" name="search" 
+                                           value="<%= filters.search %>" placeholder="Name, CNIC, phone, license...">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">All Status</option>
+                                        <option value="active" <%= filters.status === 'active' ? 'selected' : '' %>>Active</option>
+                                        <option value="on_leave" <%= filters.status === 'on_leave' ? 'selected' : '' %>>On Leave</option>
+                                        <option value="inactive" <%= filters.status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="vehicle_assigned" class="form-label">Vehicle Assignment</label>
+                                    <select class="form-select" id="vehicle_assigned" name="vehicle_assigned">
+                                        <option value="">All Drivers</option>
+                                        <option value="yes" <%= filters.vehicle_assigned === 'yes' ? 'selected' : '' %>>With Vehicle</option>
+                                        <option value="no" <%= filters.vehicle_assigned === 'no' ? 'selected' : '' %>>Without Vehicle</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drivers Table -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-list"></i> Drivers List</h5>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadLicenseAlerts()">
+                            <i class="fas fa-exclamation-triangle"></i> License Alerts
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <% if (drivers && drivers.length > 0) { %>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Driver</th>
+                                        <th>Contact</th>
+                                        <th>License</th>
+                                        <th>Vehicle</th>
+                                        <th>Status</th>
+                                        <th>Today's Orders</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% drivers.forEach(driver => { %>
+                                    <tr>
+                                        <td>
+                                            <div>
+                                                <strong><%= driver.full_name %></strong>
+                                                <br><small class="text-muted">CNIC: <%= driver.cnic %></small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <i class="fas fa-phone"></i> <%= driver.phone_primary %>
+                                                <% if (driver.phone_secondary) { %>
+                                                    <br><small class="text-muted"><%= driver.phone_secondary %></small>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <span class="badge bg-info"><%= driver.license_type %></span>
+                                                <br><small class="text-muted"><%= driver.license_number %></small>
+                                                <% if (driver.license_expiry) { %>
+                                                    <% 
+                                                        const expiryDate = new Date(driver.license_expiry);
+                                                        const today = new Date();
+                                                        const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                                                    %>
+                                                    <% if (daysToExpiry <= 30 && daysToExpiry > 0) { %>
+                                                        <br><span class="badge bg-warning">Expires soon</span>
+                                                    <% } else if (daysToExpiry <= 0) { %>
+                                                        <br><span class="badge bg-danger">Expired</span>
+                                                    <% } %>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <% if (driver.vehicle_license_plate) { %>
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-<%= driver.vehicle_type === 'truck' ? 'truck' : driver.vehicle_type === 'van' ? 'shuttle-van' : driver.vehicle_type === 'motorcycle' ? 'motorcycle' : 'car' %>"></i>
+                                                    <%= driver.vehicle_license_plate %>
+                                                </span>
+                                            <% } else { %>
+                                                <span class="text-muted">No vehicle</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (driver.status === 'active') { %>
+                                                <span class="badge bg-success">Active</span>
+                                            <% } else if (driver.status === 'on_leave') { %>
+                                                <span class="badge bg-warning">On Leave</span>
+                                            <% } else { %>
+                                                <span class="badge bg-danger">Inactive</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <% if (driver.total_orders_today > 0) { %>
+                                                <span class="badge bg-info"><%= driver.total_orders_today %> orders</span>
+                                            <% } else { %>
+                                                <span class="text-muted">No orders</span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/drivers/<%= driver.id %>" class="btn btn-outline-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/drivers/<%= driver.id %>/edit" class="btn btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <% if (driver.status !== 'inactive') { %>
+                                                <button class="btn btn-outline-danger" onclick="deleteDriver(<%= driver.id %>, '<%= driver.full_name %>')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                                <% } %>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <% if (pagination.totalPages > 1) { %>
+                        <nav aria-label="Driver pagination">
+                            <ul class="pagination justify-content-center">
+                                <% if (pagination.page > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= pagination.page - 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_assigned=<%= filters.vehicle_assigned %>">
+                                        Previous
+                                    </a>
+                                </li>
+                                <% } %>
+                                
+                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_assigned=<%= filters.vehicle_assigned %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                                <% } %>
+                                
+                                <% if (pagination.page < pagination.totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= pagination.page + 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&vehicle_assigned=<%= filters.vehicle_assigned %>">
+                                        Next
+                                    </a>
+                                </li>
+                                <% } %>
+                            </ul>
+                        </nav>
+                        <% } %>
+
+                        <% } else { %>
+                        <div class="text-center py-4">
+                            <i class="fas fa-id-card fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No drivers found</h6>
+                            <p class="text-muted">Add your first driver to get started with driver management.</p>
+                            <a href="/drivers/add" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add Driver
+                            </a>
+                        </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- License Alerts Modal -->
+    <div class="modal fade" id="licenseAlertsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        License Expiry Alerts
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="licenseAlertsContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    
+    <script>
+        function deleteDriver(driverId, driverName) {
+            if (confirm(`Are you sure you want to delete driver ${driverName}? This action cannot be undone.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/drivers/${driverId}/delete`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function loadLicenseAlerts() {
+            const modal = new bootstrap.Modal(document.getElementById('licenseAlertsModal'));
+            modal.show();
+
+            fetch('/drivers/api/license-alerts')
+                .then(response => response.json())
+                .then(data => {
+                    const content = document.getElementById('licenseAlertsContent');
+                    
+                    if (data.success && data.alerts.length > 0) {
+                        let html = '<div class="table-responsive"><table class="table"><thead><tr><th>Driver</th><th>License</th><th>Expiry</th><th>Vehicle</th></tr></thead><tbody>';
+                        
+                        data.alerts.forEach(alert => {
+                            const expiryDate = new Date(alert.license_expiry);
+                            const today = new Date();
+                            const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                            
+                            html += `
+                                <tr>
+                                    <td><strong>${alert.full_name}</strong><br><small>${alert.phone_primary}</small></td>
+                                    <td>${alert.license_number}</td>
+                                    <td>
+                                        ${expiryDate.toLocaleDateString()}
+                                        ${daysToExpiry <= 0 ? 
+                                            '<span class="badge bg-danger ms-1">Expired</span>' : 
+                                            `<span class="badge bg-warning ms-1">${daysToExpiry} days</span>`}
+                                    </td>
+                                    <td>${alert.vehicle_license_plate || 'No vehicle'}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        content.innerHTML = html;
+                    } else {
+                        content.innerHTML = `
+                            <div class="text-center py-4">
+                                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                <h6 class="text-success">All licenses are up to date!</h6>
+                                <p class="text-muted">No license expiry alerts at this time.</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading license alerts:', error);
+                    document.getElementById('licenseAlertsContent').innerHTML = `
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <h6 class="text-danger">Error loading alerts</h6>
+                            <p class="text-muted">Please try again later.</p>
+                        </div>
+                    `;
+                });
+        }
+    </script>
+</body>
+</html>
